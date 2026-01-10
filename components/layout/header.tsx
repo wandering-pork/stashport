@@ -54,10 +54,10 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
             </>
           ) : (
             <>
-              <Link href="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 transition-colors">
                 Login
               </Link>
-              <Button onClick={() => router.push('/signup')}>
+              <Button onClick={() => router.push('/auth/signup')}>
                 Sign up
               </Button>
             </>
@@ -95,10 +95,10 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
               </>
             ) : (
               <>
-                <Link href="/login" className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+                <Link href="/auth/login" className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
                   Login
                 </Link>
-                <Button className="w-full" onClick={() => router.push('/signup')}>
+                <Button className="w-full" onClick={() => router.push('/auth/signup')}>
                   Sign up
                 </Button>
               </>

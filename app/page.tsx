@@ -22,13 +22,13 @@ export default function Home() {
             Create stunning travel itineraries and instantly share them on Instagram, TikTok, Twitter & YouTube. Or stash amazing trips from other creators.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Button size="lg" onClick={() => router.push('/signup')}>
+            <Button size="lg" onClick={() => router.push('/auth/signup')}>
               Get Started
             </Button>
             <Button
               size="lg"
               variant="outline"
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/auth/login')}
             >
               Sign In
             </Button>
@@ -130,7 +130,7 @@ export default function Home() {
           <Button
             size="lg"
             variant="secondary"
-            onClick={() => router.push('/signup')}
+            onClick={() => router.push('/auth/signup')}
           >
             Get Started for Free
           </Button>
