@@ -27,8 +27,8 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="text-2xl font-bold text-blue-600">✈️</div>
-          <span className="text-xl font-bold hidden sm:inline">Stashport</span>
+          <div className="text-2xl font-bold">✈️</div>
+          <span className="text-xl font-bold hidden sm:inline text-primary-600">Stashport</span>
         </Link>
 
         {/* Desktop Navigation */}

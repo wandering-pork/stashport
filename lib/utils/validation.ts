@@ -17,11 +17,13 @@ export const itinerarySchema = z.object({
   description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
   destination: z.string().max(100, 'Destination must be less than 100 characters').optional(),
   isPublic: z.boolean().default(true),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 })
 
 export const daySchema = z.object({
   dayNumber: z.number().min(1, 'Day number must be at least 1'),
-  date: z.string().optional(),
+  date: z.string().min(1, 'Date is required').refine(val => !isNaN(new Date(val).getTime()), 'Invalid date format'),
   title: z.string().max(200, 'Day title must be less than 200 characters').optional(),
 })
 

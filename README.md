@@ -2,8 +2,8 @@
 
 Your travel itinerary passport. Collect and share beautiful travel itineraries. Stash trips you love, create your own, and share them everywhere.
 
-**Version:** 0.2.0
-**Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 🚀 Starting
+**Version:** 0.3.0
+**Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 📋 Planned | Phase 3.5 📋 Planned | Phase 4 📋 Planned
 **Build:** Zero Errors | TypeScript Strict Mode | Production Ready
 
 ---
@@ -75,21 +75,48 @@ Stashport is a vlogger-first travel platform designed for content creators to:
 
 **See:** [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md)
 
-### 🚀 Phase 3: Itinerary CRUD (Starting)
+### 📋 Phase 3: Itinerary Management (Planned)
 
-- Create itinerary pages
+- Create itinerary pages with forms
 - Edit itinerary functionality
-- Delete itinerary
-- Real database integration (Supabase)
+- Delete itinerary with confirmation
+- Real database integration (Supabase CRUD)
 - Display user's trips on dashboard
+- Database schema expansion
+- API routes for itinerary operations
 
-**See:** [PHASE_3_ROADMAP.md](./PHASE_3_ROADMAP.md)
+**See:** [PHASE_3_PLAN.md](./PHASE_3_PLAN.md)
 
-### 📋 Future Phases
+### 📋 Phase 3.5: UI/UX Polish (Planned)
 
-- **Phase 4:** Public itinerary viewing & discovery
-- **Phase 5:** Social sharing toolkit & caption generation
-- **Phase 6:** Advanced features (analytics, calendar export, etc.)
+- Design system & theming
+- Component refinement (buttons, forms, cards)
+- Responsive design optimization
+- Animations & micro-interactions
+- Accessibility improvements (WCAG 2.1)
+- Mobile optimization
+- Empty & error state design
+- Performance optimization (Lighthouse 90+)
+
+**See:** [PHASE_3.5_PLAN.md](./PHASE_3.5_PLAN.md)
+
+### 📋 Phase 4: Production Setup & Custom Domain (Planned)
+
+- Set up custom domain in Supabase
+- Configure DNS records (CNAME)
+- Update OAuth redirect URIs for production
+- Production environment configuration
+- Security hardening
+- Deployment preparation
+- Error monitoring setup
+
+**See:** [PHASE_4_PLAN.md](./PHASE_4_PLAN.md)
+
+### 🚀 Phase 5+: Advanced Features (Post-Launch)
+
+- **Phase 5:** Public itinerary sharing & discovery
+- **Phase 6:** Social sharing toolkit & caption generation
+- **Phase 7:** Advanced features (analytics, calendar export, etc.)
 
 ---
 
@@ -335,16 +362,25 @@ npm run dev  # Restart dev server
 ### Phase Documentation
 - [Phase 1 Complete](./PHASE_1_COMPLETE.md) - Infrastructure setup
 - [Phase 2 Complete](./PHASE_2_COMPLETE.md) - OAuth & authentication
-- [Phase 3 Roadmap](./PHASE_3_ROADMAP.md) - Itinerary CRUD operations
+- [Phase 3 Plan](./PHASE_3_PLAN.md) - Itinerary management
+- [Phase 3.5 Plan](./PHASE_3.5_PLAN.md) - UI/UX polish
+- [Phase 4 Plan](./PHASE_4_PLAN.md) - Production setup & custom domain
+- [Roadmap](./ROADMAP.md) - Full project roadmap
 
 ---
 
-## Contributing
+## Current Development
 
-Development currently in progress. Main phases:
-1. ✅ Phase 1: Infrastructure (Complete)
-2. 🚀 Phase 2: Authentication (Starting)
-3. 📋 Phase 3-6: Feature implementation
+Stashport is actively being developed with the following roadmap:
+
+1. ✅ **Phase 1:** Infrastructure (Complete) - Database, types, Supabase setup
+2. ✅ **Phase 2:** OAuth & Authentication (Complete) - Google, Facebook, email/password
+3. 📋 **Phase 3:** Itinerary Management (Planned) - CRUD operations, dashboard
+4. 📋 **Phase 3.5:** UI/UX Polish (Planned) - Design system, accessibility, responsive design
+5. 📋 **Phase 4:** Production Deployment (Planned) - Custom domain, deployment, security
+6. 🚀 **Phase 5+:** Advanced Features (Planned) - Sharing, discovery, social integration
+
+See [ROADMAP.md](./ROADMAP.md) for complete timeline and feature details.
 
 ---
 

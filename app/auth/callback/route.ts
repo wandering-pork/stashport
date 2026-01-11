@@ -31,7 +31,22 @@ export async function GET(request: Request) {
       )
 
       // Exchange code for session
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+      if (!error && data.user && data.user.email) {
+        // Create user profile record (ignore error if already exists)
+        try {
+          await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              auth_id: data.user.id,
+              email: data.user.email,
+            })
+        } catch {
+          // User record might already exist, which is fine
+        }
+      }
 
       if (!error) {
         // Redirect to dashboard on success

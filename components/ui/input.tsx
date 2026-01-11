@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useId } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -14,6 +15,7 @@ export function Input({
   helperText,
   className,
   id: providedId,
+  disabled,
   ...props
 }: InputProps) {
   const id = providedId || useId()
@@ -21,22 +23,32 @@ export function Input({
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor={id}
+          className="block text-sm font-medium text-neutral-700 mb-2"
+        >
           {label}
         </label>
       )}
       <input
         id={id}
-        className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors ${
-          error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-        } ${className || ''}`}
+        disabled={disabled}
+        className={cn(
+          'w-full h-11 px-4 rounded-lg text-neutral-900 placeholder:text-neutral-400',
+          'border border-neutral-300 bg-white',
+          'transition-all duration-200',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:border-primary-500',
+          'disabled:bg-neutral-100 disabled:text-neutral-500 disabled:cursor-not-allowed',
+          error && 'border-error focus-visible:ring-error/30 focus-visible:border-error',
+          className
+        )}
         {...props}
       />
       {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
+        <p className="text-sm text-error mt-2">{error}</p>
       )}
       {helperText && !error && (
-        <p className="text-sm text-gray-500 mt-1">{helperText}</p>
+        <p className="text-sm text-neutral-500 mt-2">{helperText}</p>
       )}
     </div>
   )

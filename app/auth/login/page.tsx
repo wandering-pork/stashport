@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
@@ -72,8 +73,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md relative">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors z-10"
+          aria-label="Close"
+          title="Close"
+        >
+          <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+        </button>
         <CardHeader>
           <h1 className="text-2xl font-bold">Welcome back</h1>
           <p className="text-gray-600 mt-1">Sign in to your Stashport account</p>
