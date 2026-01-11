@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+/* Distinctive Typography: Bold Display + Modern Headings + Refined Body */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -55,14 +56,15 @@
   --color-neutral-900: #0f172a;
 
   /* Background & Surface */
-  --background: #fafaf9;
+  --background: #fffaf5;
   --foreground: #0f172a;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
 
-  /* Typography */
-  --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  /* Typography - Distinctive Fonts */
+  --font-display: 'Playfair Display', serif;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Source Sans Pro', system-ui, sans-serif;
 
   /* Spacing Scale */
   --space-0: 0;
@@ -80,10 +82,17 @@
   --space-24: 6rem;
 
   /* Animation Durations */
+  --duration-instant: 100ms;
   --duration-fast: 150ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
-  --duration-slower: 500ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  /* Animation Easing Functions */
+  --easing-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --easing-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @theme inline {
@@ -152,28 +161,30 @@ body {
   font-family: var(--font-body);
 }
 
-/* Typography Scale */
+/* Typography Scale - Distinctive & Memorable */
 h1 {
-  font-family: var(--font-heading);
-  font-size: 3rem;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.1;
   color: var(--color-neutral-900);
+  letter-spacing: -0.02em;
 }
 
 h2 {
-  font-family: var(--font-heading);
-  font-size: 2.25rem;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
   color: var(--color-neutral-900);
+  letter-spacing: -0.01em;
 }
 
 h3 {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
   color: var(--color-neutral-800);
 }
 
@@ -181,8 +192,15 @@ h4 {
   font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--color-neutral-800);
+}
+
+p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-neutral-700);
 }
 
 /* Smooth transitions and animations */
@@ -196,11 +214,34 @@ h4 {
   outline-offset: 2px;
 }
 
-/* Animations */
+/* ============================================
+   ANIMATION LIBRARY - Purposeful & Delightful
+   ============================================ */
+
+/* Fade Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -208,10 +249,21 @@ h4 {
   }
 }
 
-@keyframes slideIn {
+@keyframes slideInDown {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
@@ -219,19 +271,199 @@ h4 {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Scale Animations */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Pulse Animation */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.7;
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 300ms ease-out;
+/* Shimmer Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
-.animate-slide-in {
-  animation: slideIn 300ms ease-out;
+/* Shake Animation (for errors) */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* Spin Animation (for loaders) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Glow Animation */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(248, 111, 77, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(248, 111, 77, 0);
+  }
+}
+
+/* Gradient Shift Animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Utility Classes */
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--easing-smooth) forwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut var(--duration-normal) var(--easing-smooth) forwards;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp var(--duration-slow) var(--easing-smooth) forwards;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown var(--duration-slow) var(--easing-smooth) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--duration-slow) var(--easing-smooth) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--duration-slow) var(--easing-smooth) forwards;
+}
+
+.animate-slide-out-right {
+  animation: slideOutRight var(--duration-normal) var(--easing-smooth) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-slow) var(--easing-bounce) forwards;
+}
+
+.animate-bounce {
+  animation: bounce var(--duration-slow) infinite;
+}
+
+.animate-pulse {
+  animation: pulse var(--duration-slower) infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-shake {
+  animation: shake var(--duration-normal) var(--easing-spring);
+}
+
+.animate-spin {
+  animation: spin var(--duration-slow) linear infinite;
+}
+
+.animate-glow {
+  animation: glow var(--duration-slower) infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift var(--duration-slower) ease infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
