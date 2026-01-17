@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { CountrySelect } from '@/components/ui/country-select'
 import { Toggle } from '@/components/ui/toggle'
+import { DateRangeCalendar } from '@/components/ui/date-range-calendar'
 import { DayCards } from '@/components/itinerary/day-cards'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validation'
@@ -31,6 +32,7 @@ interface ActivityForm {
   startTime?: string
   endTime?: string
   notes?: string
+  durationDays?: number
 }
 
 export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormProps) {
@@ -41,14 +43,21 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
   const [description, setDescription] = useState(initialData?.description || '')
   const [destination, setDestination] = useState(initialData?.destination || '')
   const [isPublic, setIsPublic] = useState(initialData?.is_public ?? true)
-  const [startDate, setStartDate] = useState(initialData?.days[0]?.date || '')
-  const [endDate, setEndDate] = useState(initialData?.days[initialData?.days.length - 1]?.date || '')
+  // Helper to normalize date strings (handle ISO format)
+  const normalizeDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return ''
+    // Extract YYYY-MM-DD from ISO format if needed
+    return dateStr.split('T')[0]
+  }
+
+  const [startDate, setStartDate] = useState(normalizeDate(initialData?.days[0]?.date))
+  const [endDate, setEndDate] = useState(normalizeDate(initialData?.days[initialData?.days.length - 1]?.date))
 
   // Days and activities
   const [days, setDays] = useState<DayForm[]>(
     initialData?.days.map((day) => ({
       dayNumber: day.day_number,
-      date: day.date || '',
+      date: normalizeDate(day.date),
       title: day.title || '',
       activities: day.activities.map((activity) => ({
         title: activity.title,
@@ -192,6 +201,7 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
                 startTime: '',
                 endTime: '',
                 notes: '',
+                durationDays: 1,
               },
             ],
           }
@@ -228,7 +238,9 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
             ...day,
             activities: day.activities.map((activity, index) => {
               if (index === activityIndex) {
-                return { ...activity, [field]: value }
+                // Convert durationDays to number
+                const processedValue = field === 'durationDays' ? parseInt(value, 10) || 1 : value
+                return { ...activity, [field]: processedValue }
               }
               return activity
             }),
@@ -353,7 +365,7 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
           setDays(
             createdItinerary.days.map((day: any) => ({
               dayNumber: day.day_number,
-              date: day.date || '',
+              date: normalizeDate(day.date),
               title: day.title || '',
               activities: day.activities.map((activity: any) => ({
                 title: activity.title,
@@ -379,188 +391,213 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">
-          {initialData ? 'Edit Trip' : 'Create New Trip'}
+    <form onSubmit={handleSubmit} className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface pb-32">
+      {/* Header Section */}
+      <div className="max-w-4xl mx-auto px-4 pt-12 pb-8 animate-fade-in">
+        <div className="mb-2 inline-flex items-center gap-2 px-3 py-1 bg-primary-50 border border-primary-200 rounded-full">
+          <span className="text-xl">✈️</span>
+          <span className="text-xs font-heading font-bold uppercase text-primary-700">
+            {initialData ? 'Edit' : 'Create'} Adventure
+          </span>
+        </div>
+        <h1 className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-4">
+          {initialData ? 'Edit Your Adventure' : 'Create Your Adventure'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-lg text-neutral-600 font-body max-w-2xl">
           {initialData
-            ? 'Update your trip details and itinerary'
-            : 'Plan your next adventure'}
+            ? 'Update your trip details and refine your itinerary day by day'
+            : 'Plan every detail of your next journey and inspire other travelers'}
         </p>
       </div>
 
+      {/* Error State */}
       {error && (
-        <Card className="mb-6 border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <p className="text-red-700">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="max-w-4xl mx-auto px-4 mb-6 animate-shake">
+          <Card className="border-2 border-error bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-error font-heading font-bold">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {/* Main Itinerary Section */}
-      <Card className="mb-8 border-primary-200">
-        <CardHeader className="bg-gradient-to-r from-primary-50 to-secondary-50 border-b border-primary-200">
-          <h2 className="text-2xl font-bold text-primary-900">✈️ Trip Details</h2>
-        </CardHeader>
-        <CardContent className="space-y-8 pt-8">
-          {/* Basic Info Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-primary-800 flex items-center gap-2">
-              <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
-              Trip Information
-            </h3>
+      <div className="max-w-4xl mx-auto px-4 overflow-visible">
+        {/* Consolidated Trip Details Card */}
+        <Card className="mb-8 border-t-4 border-t-primary-500 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          {/* Card Header */}
+          <CardHeader className="bg-gradient-to-r from-primary-50/80 to-transparent border-b border-primary-100 pb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-2xl">
+                ✈️
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-display font-bold text-primary-900">Trip Details</h2>
+                <p className="text-sm text-primary-700">Tell us about your adventure</p>
+              </div>
+            </div>
+          </CardHeader>
 
-            <div>
-              <Input
-                label="Trip Title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Paris Spring Break"
-                required
-              />
+          <CardContent className="pt-8 space-y-8">
+            {/* Row 1: Title & Destination */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Trip Title */}
+              <div>
+                <Input
+                  label="Trip Title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Venice Summer Escape"
+                  required
+                />
+              </div>
+
+              {/* Destination */}
+              <div>
+                <CountrySelect
+                  label="Destination"
+                  value={destination}
+                  onChange={setDestination}
+                  placeholder="Select a country..."
+                />
+              </div>
             </div>
 
+            {/* Divider */}
+            <div className="border-t border-neutral-200" />
+
+            {/* Row 2: Travel Dates */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Travel Dates
+              </label>
+              <DateRangeCalendar
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={(date) => {
+                  setStartDate(date)
+                  if (endDate) {
+                    generateDaysFromDates(date, endDate)
+                  }
+                }}
+                onEndDateChange={(date) => {
+                  setEndDate(date)
+                  if (startDate) {
+                    generateDaysFromDates(startDate, date)
+                  }
+                }}
+              />
+
+              {/* Duration Badge - Inline display when dates selected */}
+              {startDate && endDate && (
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-secondary-50 border border-secondary-200 rounded-full animate-scale-in">
+                  <span className="text-secondary-600 text-sm font-heading font-bold">
+                    {getDayCount()} {getDayCount() === 1 ? 'day' : 'days'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-neutral-200" />
+
+            {/* Row 3: Description */}
             <div>
               <Textarea
-                label="Description"
+                label="Description (Optional)"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your trip (optional)"
+                placeholder="Share the story of your trip - what inspired it, what you hope to experience..."
                 maxLength={2000}
               />
-              <p className="text-xs text-gray-500 mt-2">
-                {description.length}/2000 characters
+              <p className="text-xs text-neutral-400 mt-2">
+                {description.length}/2000
               </p>
             </div>
-          </div>
 
-          {/* Dates and Duration Section */}
-          <div className="space-y-6 bg-gradient-to-br from-secondary-50 to-transparent p-6 rounded-lg border border-secondary-100">
-            <h3 className="text-lg font-semibold text-secondary-900 flex items-center gap-2">
-              <span className="w-1 h-6 bg-secondary-500 rounded-full"></span>
-              Trip Duration
-            </h3>
+            {/* Divider */}
+            <div className="border-t border-neutral-200" />
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Row 4: Visibility Toggle */}
+            <div className="flex items-center justify-between py-2">
               <div>
-                <Input
-                  label="Start Date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value)
-                    if (endDate) {
-                      generateDaysFromDates(e.target.value, endDate)
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <Input
-                  label="End Date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value)
-                    if (startDate) {
-                      generateDaysFromDates(startDate, e.target.value)
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
-            {startDate && endDate && (
-              <div className="p-4 bg-white border-2 border-secondary-300 rounded-lg flex items-center gap-3">
-                <span className="text-2xl">📅</span>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Trip Duration</p>
-                  <p className="text-xl font-bold text-secondary-700">
-                    {getDayCount()} {getDayCount() === 1 ? 'day' : 'days'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Location and Visibility Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-accent-800 flex items-center gap-2">
-              <span className="w-1 h-6 bg-accent-500 rounded-full"></span>
-              Location & Settings
-            </h3>
-
-            <div>
-              <CountrySelect
-                label="Country"
-                value={destination}
-                onChange={setDestination}
-                placeholder="Select a country..."
-              />
-            </div>
-
-            <div className="bg-gradient-to-r from-accent-50 to-transparent p-6 rounded-lg border border-accent-100 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-accent-900">Trip Visibility</p>
-                <p className="text-xs text-accent-600 mt-1">
-                  {isPublic ? '🌍 Anyone with the link can view' : '🔒 Only you can view'}
+                <p className="font-heading font-bold text-neutral-800">Trip Visibility</p>
+                <p className="text-sm text-neutral-500 mt-1">
+                  {isPublic ? 'Anyone with the link can view' : 'Only you can view'}
                 </p>
               </div>
-              <Toggle
-                id="isPublic"
-                checked={isPublic}
-                onChange={setIsPublic}
-                label=""
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-neutral-500">
+                  {isPublic ? 'Public' : 'Private'}
+                </span>
+                <Toggle
+                  id="isPublic"
+                  checked={isPublic}
+                  onChange={setIsPublic}
+                  label=""
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Days and Activities Section - Timeline */}
+        {days.length > 0 && (
+          <div className="animate-fade-in mb-12" style={{ animationDelay: '200ms' }}>
+            {/* Section Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-secondary-100 text-xl">
+                📅
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold text-neutral-900">Your Itinerary</h2>
+                <p className="text-sm text-neutral-500">
+                  {days.length} {days.length === 1 ? 'day' : 'days'} planned
+                </p>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="pl-1">
+              <DayCards
+                days={days}
+                onReorder={setDays}
+                onAddActivity={handleAddActivity}
+                onRemoveDay={handleRemoveDay}
+                onUpdateDayTitle={(dayNumber, title) =>
+                  handleDayChange(dayNumber, 'title', title)
+                }
+                onRemoveActivity={handleRemoveActivity}
+                onActivityChange={handleActivityChange}
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Days and Activities Section */}
-      {days.length > 0 && (
-        <Card className="mb-8 border-secondary-200">
-          <CardHeader className="bg-gradient-to-r from-secondary-50 to-accent-50 border-b border-secondary-200">
-            <h2 className="text-2xl font-bold text-secondary-900">📋 Itinerary</h2>
-          </CardHeader>
-          <CardContent className="pt-8">
-            <DayCards
-              days={days}
-              onReorder={setDays}
-              onAddActivity={handleAddActivity}
-              onRemoveDay={handleRemoveDay}
-              onUpdateDayTitle={(dayNumber, title) =>
-                handleDayChange(dayNumber, 'title', title)
-              }
-              onRemoveActivity={handleRemoveActivity}
-              onActivityChange={handleActivityChange}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-4 justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.back()}
-          disabled={isSubmitting || isLoading}
-        >
-          {initialData ? 'Close' : 'Cancel'}
-        </Button>
-        {isModified && (
-          <Button
-            type="submit"
-            isLoading={isSubmitting || isLoading}
-            disabled={isSubmitting || isLoading}
-          >
-            {initialData ? 'Save Changes' : 'Create Trip'}
-          </Button>
         )}
+      </div>
+
+      {/* Sticky Footer with Actions */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white/95 backdrop-blur-sm shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex gap-4 justify-end">
+          <Button
+            type="button"
+            variant="tertiary"
+            onClick={() => router.back()}
+            disabled={isSubmitting || isLoading}
+            className="font-heading font-bold"
+          >
+            {initialData ? 'Close' : 'Cancel'}
+          </Button>
+          {isModified && (
+            <Button
+              type="submit"
+              isLoading={isSubmitting || isLoading}
+              disabled={isSubmitting || isLoading}
+              className="font-heading font-bold min-w-[160px]"
+            >
+              {initialData ? 'Save Changes' : 'Create Trip'}
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   )

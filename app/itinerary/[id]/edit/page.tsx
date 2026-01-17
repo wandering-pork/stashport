@@ -57,10 +57,10 @@ export default function EditItineraryPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading trip...</p>
+      <div className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <Loader2 className="w-16 h-16 text-primary-500 animate-spin mx-auto mb-6" />
+          <p className="text-lg text-neutral-600 font-body">Loading your adventure...</p>
         </div>
       </div>
     )
@@ -71,27 +71,29 @@ export default function EditItineraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div>
       {error ? (
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <p className="text-red-700 mb-4">{error}</p>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Back to Dashboard
-              </button>
-            </CardContent>
-          </Card>
+        <div className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface flex items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <Card className="border-2 border-error bg-red-50">
+              <CardContent className="pt-6">
+                <p className="text-error font-heading font-bold mb-6 text-lg">{error}</p>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full py-3 px-4 bg-primary-600 text-white font-heading font-bold rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Back to Dashboard
+                </button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       ) : itinerary ? (
         <ItineraryForm initialData={itinerary} />
       ) : (
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600">Itinerary not found</p>
+            <p className="text-lg text-neutral-600 font-body">Trip not found</p>
           </div>
         </div>
       )}

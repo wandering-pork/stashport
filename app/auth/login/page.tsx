@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { loginSchema } from '@/lib/utils/validation'
 import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils/cn'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -73,97 +73,180 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md relative">
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors z-10"
-          aria-label="Close"
-          title="Close"
-        >
-          <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
-        </button>
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-gray-600 mt-1">Sign in to your Stashport account</p>
-        </CardHeader>
+    <div className="min-h-screen bg-mesh-editorial flex">
+      {/* Left Column - Brand Panel */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800" />
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+        {/* Pattern Overlay */}
+        <div className="absolute inset-0 pattern-diagonal opacity-10" />
 
+        {/* Grain Texture */}
+        <div className="absolute inset-0 grain-overlay opacity-40" />
+
+        {/* Decorative Shapes */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-primary-400 rounded-full opacity-20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-secondary-500 rounded-full opacity-15 blur-3xl" />
+        <div className="absolute top-1/4 right-1/4 w-4 h-4 bg-white rounded-full opacity-40" />
+        <div className="absolute bottom-1/3 left-1/3 w-3 h-3 bg-accent-400 rounded-full opacity-60" />
+        <div className="absolute top-2/3 right-1/3 w-2 h-2 bg-white rounded-full opacity-30" />
+
+        {/* Content - Centered Vertical Layout */}
+        <div className="relative z-10 flex flex-col justify-center items-start p-12 lg:p-16 w-full h-full">
+          {/* Main Content - Centered */}
+          <div className="animate-reveal-left max-w-sm">
+            <h1 className="text-editorial-display text-5xl xl:text-6xl text-white mb-6 leading-[0.95]">
+              Welcome
+              <br />
+              back,
+              <br />
+              <span className="text-primary-200">explorer</span>
+            </h1>
+
+            <div className="decorative-line w-20 mb-8 opacity-60" />
+
+            <p className="text-lg text-primary-100 font-body leading-relaxed">
+              Sign in to continue planning and sharing your adventures. Your journeys are waiting.
+            </p>
+          </div>
+
+          {/* Quote - Positioned Absolute at Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-12 lg:p-16 border-t border-white/20">
+            <p className="text-sm text-primary-200 italic font-body leading-relaxed max-w-sm">
+              "Travel isn't just about visiting new places, it's about discovering new perspectives."
+            </p>
+            <p className="text-xs text-primary-300 font-heading font-bold uppercase tracking-wider mt-3">
+              — Stashport Community
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column - Form */}
+      <div className="w-full lg:w-[55%] flex items-center justify-center px-6 md:px-12 py-20 lg:py-0">
+        <div className="w-full max-w-md animate-reveal-up">
+          {/* Mobile Heading */}
+          <div className="lg:hidden mb-10">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl">✈️</span>
+              <span className="text-xl font-display font-bold text-primary-600">Stashport</span>
+            </div>
+            <h1 className="text-editorial-headline text-4xl text-neutral-900 mb-3">
+              Welcome back
+            </h1>
+            <p className="text-neutral-600 font-body">
+              Sign in to continue your journey
+            </p>
+          </div>
+
+          {/* Desktop Heading */}
+          <div className="hidden lg:block mb-10">
+            <span className="text-xs font-heading font-bold uppercase tracking-wider text-primary-600 mb-4 block">
+              Sign In
+            </span>
+            <h2 className="text-editorial-headline text-4xl text-neutral-900 mb-3">
+              Continue your journey
+            </h2>
+            <p className="text-neutral-600 font-body">
+              Enter your credentials to access your account
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-error rounded-xl animate-shake-enhanced shadow-sm">
+              <p className="text-error font-heading font-bold text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              showErrorAnimation={!!error}
               required
             />
 
             <Input
               label="Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              showErrorAnimation={!!error}
               required
             />
-          </CardContent>
 
-          <CardFooter className="flex flex-col gap-3">
             <Button
               type="submit"
-              className="w-full"
+              size="lg"
+              className="w-full font-heading font-bold shadow-coral hover:shadow-coral-lg"
               isLoading={isLoading}
             >
-              Sign in
+              Sign In
+              <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
+          </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-600">Or continue with</span>
-              </div>
-            </div>
+          {/* Divider */}
+          <div className="my-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
+            <span className="text-xs font-heading font-bold text-neutral-400 uppercase tracking-wider">Or continue with</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
+          </div>
 
+          {/* OAuth Buttons */}
+          <div className="grid grid-cols-2 gap-3">
             <Button
               type="button"
-              variant="outline"
-              className="w-full"
+              variant="secondary"
+              size="lg"
+              className="font-heading font-bold"
               onClick={() => handleOAuthLogin('google')}
               disabled={isOAuthLoading === 'google'}
+              isLoading={isOAuthLoading === 'google'}
+              hideTextWhileLoading
             >
-              {isOAuthLoading === 'google' ? 'Signing in...' : 'Google'}
+              Google
             </Button>
 
             <Button
               type="button"
-              variant="outline"
-              className="w-full"
+              variant="secondary"
+              size="lg"
+              className="font-heading font-bold"
               onClick={() => handleOAuthLogin('facebook')}
               disabled={isOAuthLoading === 'facebook'}
+              isLoading={isOAuthLoading === 'facebook'}
+              hideTextWhileLoading
             >
-              {isOAuthLoading === 'facebook' ? 'Signing in...' : 'Facebook'}
+              Facebook
             </Button>
+          </div>
 
-            <div className="text-center text-sm">
-              <p className="text-gray-600">
-                Don't have an account?{' '}
-                <Link href="/auth/signup" className="text-blue-600 hover:underline">
-                  Sign up
-                </Link>
-              </p>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+          {/* Sign Up Link */}
+          <div className="mt-10 pt-8 border-t border-neutral-200">
+            <p className="text-center text-neutral-600 font-body">
+              New to Stashport?{' '}
+              <Link
+                href="/auth/signup"
+                className={cn(
+                  'text-primary-600 font-heading font-bold',
+                  'hover:text-primary-700 transition-colors duration-300',
+                  'underline underline-offset-4 decoration-2 decoration-primary-200 hover:decoration-primary-400'
+                )}
+              >
+                Create an account
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

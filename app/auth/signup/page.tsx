@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { signupSchema } from '@/lib/utils/validation'
 import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils/cn'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -93,107 +93,215 @@ export default function SignupPage() {
     }
   }
 
+  const features = [
+    'Create beautiful day-by-day itineraries',
+    'Share your trips with the world',
+    'Discover journeys from travelers',
+    'Save and customize any trip',
+  ]
+
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md relative">
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors z-10"
-          aria-label="Close"
-          title="Close"
-        >
-          <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
-        </button>
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Create account</h1>
-          <p className="text-gray-600 mt-1">Join Stashport and start collecting trips</p>
-        </CardHeader>
+    <div className="min-h-screen bg-mesh-editorial flex">
+      {/* Left Column - Brand Panel (Teal Theme) */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
+        {/* Gradient Background - Teal */}
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary-500 via-secondary-600 to-secondary-800" />
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+        {/* Pattern Overlay */}
+        <div className="absolute inset-0 pattern-dots opacity-10" />
 
+        {/* Grain Texture */}
+        <div className="absolute inset-0 grain-overlay opacity-40" />
+
+        {/* Decorative Shapes */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-secondary-400 rounded-full opacity-20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-primary-500 rounded-full opacity-15 blur-3xl" />
+        <div className="absolute top-1/3 left-1/4 w-4 h-4 bg-white rounded-full opacity-40" />
+        <div className="absolute bottom-1/4 right-1/3 w-3 h-3 bg-accent-400 rounded-full opacity-60" />
+        <div className="absolute top-2/3 left-1/3 w-2 h-2 bg-white rounded-full opacity-30" />
+
+        {/* Content - Centered Vertical Layout */}
+        <div className="relative z-10 flex flex-col justify-center items-start p-12 lg:p-16 w-full h-full">
+          {/* Main Content - Centered */}
+          <div className="animate-reveal-left max-w-sm">
+            <h1 className="text-editorial-display text-5xl xl:text-6xl text-white mb-6 leading-[0.95]">
+              Start your
+              <br />
+              <span className="text-secondary-200">journey</span>
+              <br />
+              today
+            </h1>
+
+            <div className="w-20 h-1 bg-gradient-to-r from-secondary-300 to-accent-400 rounded-full mb-8" />
+
+            <p className="text-lg text-secondary-100 font-body leading-relaxed mb-10">
+              Join thousands of travel creators planning adventures and sharing inspiration.
+            </p>
+
+            {/* Features List */}
+            <div className="space-y-4">
+              {features.map((feature, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 animate-reveal-left"
+                  style={{ animationDelay: `${200 + i * 100}ms` }}
+                >
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="text-sm text-secondary-100 font-body">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Inspirational Quote - Positioned Absolute at Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 border-t border-white/20 p-12 lg:p-16">
+            <p className="text-sm text-secondary-200 italic font-body leading-relaxed max-w-sm">
+              "Travel isn't just about visiting new places, it's about discovering new perspectives."
+            </p>
+            <p className="text-xs text-secondary-300 font-heading font-bold uppercase tracking-wider mt-3">
+              — Stashport Community
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column - Form */}
+      <div className="w-full lg:w-[55%] flex items-center justify-center px-6 md:px-12 py-20 lg:py-0">
+        <div className="w-full max-w-md animate-reveal-up">
+          {/* Mobile Heading */}
+          <div className="lg:hidden mb-10">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl">✈️</span>
+              <span className="text-xl font-display font-bold text-secondary-600">Stashport</span>
+            </div>
+            <h1 className="text-editorial-headline text-4xl text-neutral-900 mb-3">
+              Join Stashport
+            </h1>
+            <p className="text-neutral-600 font-body">
+              Create your free account
+            </p>
+          </div>
+
+          {/* Desktop Heading */}
+          <div className="hidden lg:block mb-10">
+            <span className="text-xs font-heading font-bold uppercase tracking-wider text-secondary-600 mb-4 block">
+              Create Account
+            </span>
+            <h2 className="text-editorial-headline text-4xl text-neutral-900 mb-3">
+              Begin your adventure
+            </h2>
+            <p className="text-neutral-600 font-body">
+              Create an account to start planning your journeys
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-error rounded-xl animate-shake-enhanced shadow-sm">
+              <p className="text-error font-heading font-bold text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Signup Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              showErrorAnimation={!!error}
               required
             />
 
             <Input
               label="Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              showErrorAnimation={!!error}
+              helperText="At least 8 characters"
               required
             />
 
             <Input
               label="Confirm Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              showErrorAnimation={!!error}
               required
             />
-          </CardContent>
 
-          <CardFooter className="flex flex-col gap-3">
             <Button
               type="submit"
-              className="w-full"
+              size="lg"
+              className="w-full font-heading font-bold shadow-teal hover:shadow-teal-lg bg-secondary-600 hover:bg-secondary-700"
               isLoading={isLoading}
             >
-              Create account
+              Create Account
+              <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
+          </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-600">Or sign up with</span>
-              </div>
-            </div>
+          {/* Divider */}
+          <div className="my-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
+            <span className="text-xs font-heading font-bold text-neutral-400 uppercase tracking-wider">Or sign up with</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
+          </div>
 
+          {/* OAuth Buttons */}
+          <div className="grid grid-cols-2 gap-3">
             <Button
               type="button"
-              variant="outline"
-              className="w-full"
+              variant="secondary"
+              size="lg"
+              className="font-heading font-bold"
               onClick={() => handleOAuthSignup('google')}
               disabled={isOAuthLoading === 'google'}
+              isLoading={isOAuthLoading === 'google'}
+              hideTextWhileLoading
             >
-              {isOAuthLoading === 'google' ? 'Signing up...' : 'Google'}
+              Google
             </Button>
 
             <Button
               type="button"
-              variant="outline"
-              className="w-full"
+              variant="secondary"
+              size="lg"
+              className="font-heading font-bold"
               onClick={() => handleOAuthSignup('facebook')}
               disabled={isOAuthLoading === 'facebook'}
+              isLoading={isOAuthLoading === 'facebook'}
+              hideTextWhileLoading
             >
-              {isOAuthLoading === 'facebook' ? 'Signing up...' : 'Facebook'}
+              Facebook
             </Button>
+          </div>
 
-            <div className="text-center text-sm">
-              <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link href="/auth/login" className="text-blue-600 hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+          {/* Sign In Link */}
+          <div className="mt-10 pt-8 border-t border-neutral-200">
+            <p className="text-center text-neutral-600 font-body">
+              Already have an account?{' '}
+              <Link
+                href="/auth/login"
+                className={cn(
+                  'text-secondary-600 font-heading font-bold',
+                  'hover:text-secondary-700 transition-colors duration-300',
+                  'underline underline-offset-4 decoration-2 decoration-secondary-200 hover:decoration-secondary-400'
+                )}
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

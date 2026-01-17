@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { COUNTRIES, filterCountries } from '@/lib/utils/countries'
@@ -23,16 +24,38 @@ export function CountrySelect({
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [filtered, setFiltered] = useState(COUNTRIES)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFiltered(filterCountries(search))
   }, [search])
 
+  // Update dropdown position when open
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      })
+    }
+  }, [isOpen])
+
+  // Close on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false)
       }
     }
@@ -40,6 +63,27 @@ export function CountrySelect({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Update position on scroll/resize
+  useEffect(() => {
+    if (!isOpen) return
+    const updatePosition = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+          width: rect.width,
+        })
+      }
+    }
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [isOpen])
 
   const handleSelect = (country: string) => {
     onChange(country)
@@ -53,6 +97,44 @@ export function CountrySelect({
     setSearch('')
   }
 
+  const dropdown = isOpen && typeof window !== 'undefined' ? createPortal(
+    <div
+      ref={dropdownRef}
+      className="fixed bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-fade-in"
+      style={{
+        top: dropdownPosition.top,
+        left: dropdownPosition.left,
+        width: dropdownPosition.width,
+        zIndex: 99999,
+      }}
+    >
+      {filtered.length === 0 ? (
+        <div className="px-4 py-8 text-center text-gray-500 text-sm">
+          No countries found
+        </div>
+      ) : (
+        <ul className="py-1">
+          {filtered.map((country) => (
+            <li key={country}>
+              <button
+                onClick={() => handleSelect(country)}
+                className={cn(
+                  'w-full text-left px-4 py-2 text-sm transition-colors text-gray-900',
+                  'hover:bg-primary-50 hover:text-gray-900',
+                  value === country && 'bg-primary-100 text-primary-700'
+                )}
+                type="button"
+              >
+                {country}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>,
+    document.body
+  ) : null
+
   return (
     <div ref={containerRef} className="relative">
       {label && (
@@ -63,6 +145,7 @@ export function CountrySelect({
       )}
 
       <div
+        ref={triggerRef}
         onClick={() => {
           setIsOpen(!isOpen)
           if (!isOpen) inputRef.current?.focus()
@@ -115,33 +198,7 @@ export function CountrySelect({
         )}
       </div>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-          {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-gray-500 text-sm">
-              No countries found
-            </div>
-          ) : (
-            <ul className="py-1">
-              {filtered.map((country) => (
-                <li key={country}>
-                  <button
-                    onClick={() => handleSelect(country)}
-                    className={cn(
-                      'w-full text-left px-4 py-2 text-sm transition-colors text-gray-900',
-                      'hover:bg-primary-50 hover:text-gray-900',
-                      value === country && 'bg-primary-100 text-primary-700'
-                    )}
-                    type="button"
-                  >
-                    {country}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {dropdown}
     </div>
   )
 }

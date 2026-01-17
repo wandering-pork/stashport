@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stashport Roadmap</title>
+  <style>
+    :root {
+      --coral: #f86f4d;
+      --coral-light: #fef2f0;
+      --teal: #14b8a6;
+      --teal-light: #f0fdfa;
+      --golden: #f59e0b;
+      --golden-light: #fffbeb;
+      --cream: #fffaf5;
+      --neutral-900: #1a1a1a;
+      --neutral-600: #525252;
+      --neutral-400: #a3a3a3;
+      --neutral-200: #e5e5e5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--neutral-900);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--coral) 0%, #e85a3a 100%);
+      border-radius: 16px;
+      color: white;
+    }
+
+    header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    header p { opacity: 0.9; font-size: 1.1rem; }
+
+    .status-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+
+    .section { margin-bottom: 2.5rem; }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid var(--coral);
+      display: inline-block;
+    }
+
+    /* Completed Foundation */
+    .completed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .completed-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      border-left: 4px solid var(--teal);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .completed-item::before {
+      content: '✓';
+      color: var(--teal);
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    /* Sprint Cards */
+    .sprint-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .sprint-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .sprint-header {
+      padding: 1.25rem;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sprint-1 .sprint-header { background: var(--coral); }
+    .sprint-2 .sprint-header { background: var(--teal); }
+    .sprint-3 .sprint-header { background: var(--golden); }
+
+    .sprint-header h3 { font-size: 1.1rem; }
+    .sprint-hours {
+      background: rgba(255,255,255,0.2);
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+    }
+
+    .sprint-body { padding: 1.25rem; }
+
+    .feature-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--neutral-200);
+    }
+
+    .feature-item:last-child { border-bottom: none; }
+
+    .feature-name { flex: 1; }
+
+    .priority-badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .p0 { background: #fef2f2; color: #dc2626; }
+    .p1 { background: #fef3c7; color: #d97706; }
+    .p2 { background: #e0f2fe; color: #0284c7; }
+
+    .effort-badge {
+      font-size: 0.8rem;
+      color: var(--neutral-600);
+      background: var(--neutral-200);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    /* Post-MVP & Deferred */
+    .post-mvp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .post-mvp-item {
+      background: white;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .deferred-item {
+      background: var(--neutral-200);
+      opacity: 0.7;
+    }
+
+    .deferred-reason {
+      font-size: 0.8rem;
+      color: var(--neutral-600);
+      font-style: italic;
+    }
+
+    /* Progress Bar */
+    .progress-section {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .progress-bar {
+      height: 24px;
+      background: var(--neutral-200);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .progress-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .progress-done { background: var(--teal); width: 40%; }
+    .progress-sprint1 { background: var(--coral); width: 10%; }
+    .progress-sprint2 { background: var(--golden); width: 15%; }
+    .progress-sprint3 { background: #8b5cf6; width: 20%; }
+    .progress-remaining { background: var(--neutral-400); width: 15%; }
+
+    .progress-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Tech Stack */
+    .tech-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .tech-badge {
+      background: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      border: 1px solid var(--neutral-200);
+    }
+
+    .tech-badge.planned {
+      background: var(--golden-light);
+      border-color: var(--golden);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--neutral-200);
+      color: var(--neutral-600);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      header h1 { font-size: 1.75rem; }
+      .sprint-container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Stashport Roadmap</h1>
+      <p>MVP-focused development plan</p>
+      <div class="status-badge">Phases 1-4 ✅ Complete | MVP Features 🚀 In Progress</div>
+    </header>
+
+    <!-- Progress Overview -->
+    <div class="progress-section">
+      <h2 style="margin-bottom: 1rem;">Overall Progress</h2>
+      <div class="progress-bar">
+        <div class="progress-segment progress-done">Foundation</div>
+        <div class="progress-segment progress-sprint1">S1</div>
+        <div class="progress-segment progress-sprint2">S2</div>
+        <div class="progress-segment progress-sprint3">S3</div>
+        <div class="progress-segment progress-remaining">Post</div>
+      </div>
+      <div class="progress-legend">
+        <div class="legend-item"><div class="legend-dot" style="background: var(--teal)"></div> Foundation Complete</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--coral)"></div> Sprint 1 (~5-7h)</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--golden)"></div> Sprint 2 (~8-10h)</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #8b5cf6"></div> Sprint 3 (~14-17h)</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--neutral-400)"></div> Post-MVP</div>
+      </div>
+    </div>
+
+    <!-- Completed Foundation -->
+    <div class="section">
+      <h2 class="section-title">✅ Completed Foundation</h2>
+      <div class="completed-grid">
+        <div class="completed-item">Authentication (Email, Google, Facebook)</div>
+        <div class="completed-item">Itinerary CRUD</div>
+        <div class="completed-item">Day & Activity Management</div>
+        <div class="completed-item">Public/Private Sharing</div>
+        <div class="completed-item">Design System & Components</div>
+        <div class="completed-item">WCAG AA Accessibility</div>
+        <div class="completed-item">Mobile-Responsive Design</div>
+      </div>
+    </div>
+
+    <!-- MVP Sprints -->
+    <div class="section">
+      <h2 class="section-title">🚀 MVP Sprint Plan</h2>
+      <p style="margin-bottom: 1.5rem; color: var(--neutral-600);">Total MVP Effort: ~27-34 hours</p>
+
+      <div class="sprint-container">
+        <!-- Sprint 1 -->
+        <div class="sprint-card sprint-1">
+          <div class="sprint-header">
+            <h3>Sprint 1: Foundation</h3>
+            <span class="sprint-hours">~5-7h</span>
+          </div>
+          <div class="sprint-body">
+            <div class="feature-item">
+              <span class="feature-name">Post-signup confirmation flow</span>
+              <span class="priority-badge p0">P0</span>
+              <span class="effort-badge">1-2h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Autosave & draft recovery</span>
+              <span class="priority-badge p0">P0</span>
+              <span class="effort-badge">2-3h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Dashboard pagination (9 cards)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">1-2h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprint 2 -->
+        <div class="sprint-card sprint-2">
+          <div class="sprint-header">
+            <h3>Sprint 2: Discovery & Identity</h3>
+            <span class="sprint-hours">~8-10h</span>
+          </div>
+          <div class="sprint-body">
+            <div class="feature-item">
+              <span class="feature-name">Trip categories / tags</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">3-4h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Creator identity (avatar + name)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">3-4h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Trip quick stats</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">1-2h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprint 3 -->
+        <div class="sprint-card sprint-3">
+          <div class="sprint-header">
+            <h3>Sprint 3: Sharing & Onboarding</h3>
+            <span class="sprint-hours">~14-17h</span>
+          </div>
+          <div class="sprint-body">
+            <div class="feature-item">
+              <span class="feature-name">Guided onboarding flow</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">3-4h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Featured itineraries + Stash</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">6-8h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Social caption generator</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">4-5h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post-MVP -->
+    <div class="section">
+      <h2 class="section-title">📋 Post-MVP (v1.1 / v1.2)</h2>
+      <div class="post-mvp-grid">
+        <div class="post-mvp-item">
+          <span>User profile settings page</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">4-6h</span>
+        </div>
+        <div class="post-mvp-item">
+          <span>Multi-country itineraries</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">4-6h</span>
+        </div>
+        <div class="post-mvp-item">
+          <span>Multi-day activity indicators</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">4-6h</span>
+        </div>
+        <div class="post-mvp-item">
+          <span>Itinerary stats (views, stashes)</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">4-6h</span>
+        </div>
+        <div class="post-mvp-item">
+          <span>Packing list</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">3-4h</span>
+        </div>
+        <div class="post-mvp-item">
+          <span>Comments on public trips</span>
+          <span class="priority-badge p2">P2</span>
+          <span class="effort-badge">5-6h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deferred -->
+    <div class="section">
+      <h2 class="section-title">⏸️ Deferred (After Traction)</h2>
+      <div class="post-mvp-grid">
+        <div class="post-mvp-item deferred-item">
+          <span>Activity photos</span>
+          <span class="deferred-reason">Requires storage setup</span>
+        </div>
+        <div class="post-mvp-item deferred-item">
+          <span>Cover photos for cards</span>
+          <span class="deferred-reason">Depends on photo upload</span>
+        </div>
+        <div class="post-mvp-item deferred-item">
+          <span>Video embeds</span>
+          <span class="deferred-reason">Nice-to-have</span>
+        </div>
+        <div class="post-mvp-item deferred-item">
+          <span>Maps & route visualization</span>
+          <span class="deferred-reason">API costs</span>
+        </div>
+        <div class="post-mvp-item deferred-item">
+          <span>Real-time collaboration</span>
+          <span class="deferred-reason">Complex architecture</span>
+        </div>
+        <div class="post-mvp-item deferred-item">
+          <span>Templates</span>
+          <span class="deferred-reason">Still considering</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="section">
+      <h2 class="section-title">🛠️ Tech Stack</h2>
+      <div class="tech-grid">
+        <span class="tech-badge">Next.js 16</span>
+        <span class="tech-badge">TypeScript</span>
+        <span class="tech-badge">Tailwind CSS 4</span>
+        <span class="tech-badge">Supabase</span>
+        <span class="tech-badge">Zod</span>
+        <span class="tech-badge">@dnd-kit</span>
+        <span class="tech-badge planned">+ Supabase Storage</span>
+        <span class="tech-badge planned">+ use-debounce</span>
+      </div>
+    </div>
+
+    <footer>
+      <p>Last Updated: January 2026 | <a href="./BACKLOG.md">View Full Backlog</a> | <a href="./stashport_prd.md">View PRD</a></p>
+    </footer>
+  </div>
+</body>
+</html>

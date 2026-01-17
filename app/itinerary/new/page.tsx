@@ -19,10 +19,10 @@ export default function CreateItineraryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <Loader2 className="w-16 h-16 text-primary-500 animate-spin mx-auto mb-6" />
+          <p className="text-lg text-neutral-600 font-body">Preparing your canvas...</p>
         </div>
       </div>
     )
@@ -33,7 +33,7 @@ export default function CreateItineraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div>
       <ItineraryForm />
     </div>
   )
