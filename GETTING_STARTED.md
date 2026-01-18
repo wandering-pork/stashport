@@ -116,7 +116,7 @@ stashport/
 ├── .env.local                    # Environment variables (NOT in git)
 ├── database-schema.sql           # Database structure reference
 ├── ROADMAP.md                    # Full project roadmap
-├── PHASE_*.md                    # Phase documentation
+├── BACKLOG.md                    # MVP features and priorities
 └── README.md                     # Project overview
 ```
 
@@ -413,22 +413,18 @@ Shows all errors before production deployment.
 
 ---
 
-## Phase-Specific Information
+## Project Status
 
-### Phase 1: Infrastructure ✅
-Database and types are set up. See [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)
+### Completed Phases
+- **Phase 1:** Infrastructure - Database and types set up
+- **Phase 2:** Authentication - Google, Facebook, and email/password auth
+- **Phase 3:** Itinerary Management - Full CRUD operations
+- **Phase 4:** UI/UX Polish - Design system and accessibility
 
-### Phase 2: Authentication ✅
-Google, Facebook, and email/password auth are working. See [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md)
+### Current Focus
+MVP features defined in [BACKLOG.md](./BACKLOG.md) Sprint 1-3.
 
-### Phase 3: Itinerary Management 📋
-Implementing CRUD operations. See [PHASE_3_PLAN.md](./PHASE_3_PLAN.md)
-
-### Phase 3.5: UI/UX Polish 📋
-Polish and accessibility. See [PHASE_3.5_PLAN.md](./PHASE_3.5_PLAN.md)
-
-### Phase 4: Production 📋
-Custom domain and deployment. See [PHASE_4_PLAN.md](./PHASE_4_PLAN.md)
+See [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) for implementation details and [ROADMAP.md](./ROADMAP.md) for the full project roadmap.
 
 ---
 
@@ -455,7 +451,7 @@ Identify and fix type issues before building.
 - Check redirect URIs in Google Console and Facebook settings
 - Verify URLs match exactly (including protocol and port)
 - Check `.env.local` has correct Client IDs
-- See [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) for OAuth setup
+- See [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) for OAuth setup details
 
 ### Database not returning data
 - Check RLS policies in Supabase Dashboard
@@ -477,9 +473,9 @@ Identify and fix type issues before building.
 ### Project Documentation
 - [README](./README.md) - Project overview
 - [ROADMAP](./ROADMAP.md) - Full timeline
-- [PHASE_1_COMPLETE](./PHASE_1_COMPLETE.md) - Infrastructure details
-- [PHASE_2_COMPLETE](./PHASE_2_COMPLETE.md) - Auth details
-- [PHASE_3_PLAN](./PHASE_3_PLAN.md) - Itinerary CRUD plan
+- [BACKLOG](./BACKLOG.md) - MVP features and priorities
+- [IMPLEMENTATION_SUMMARY](./IMPLEMENTATION_SUMMARY.md) - Phase implementation details
+- [ARCHITECTURE](./ARCHITECTURE.md) - Technical architecture
 
 ---
 
@@ -520,17 +516,17 @@ NEXT_PUBLIC_FACEBOOK_APP_ID=... (optional)
 ## Next Steps
 
 1. **Read the documentation** - Start with [README.md](./README.md) and [ROADMAP.md](./ROADMAP.md)
-2. **Explore the codebase** - Check out Phase 1 and 2 completed code
+2. **Review the backlog** - See [BACKLOG.md](./BACKLOG.md) for MVP features
 3. **Run locally** - Follow setup above and test the app
-4. **Join Phase 3** - Implement itinerary management
-5. **Check phase plans** - See what needs to be built next
+4. **Explore the codebase** - Check components, lib, and app directories
+5. **Check implementation details** - See [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)
 
 ---
 
 ## Questions?
 
-- Check phase documentation files
-- Review code in existing phases
+- Check [BACKLOG.md](./BACKLOG.md) and [ROADMAP.md](./ROADMAP.md)
+- Review code in existing components and lib directories
 - Look at TypeScript types for data structure
 - Check Supabase Dashboard for database structure
 

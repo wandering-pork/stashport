@@ -802,9 +802,9 @@ Custom domain (Phase 4)
 
 ## Related Documentation
 
-- [PHASE_3_COMPLETE.md](./PHASE_3_COMPLETE.md) - Implementation details
-- [STATUS.md](./STATUS.md) - Current project status
-- [ROADMAP.md](./ROADMAP.md) - Long-term vision
+- [ROADMAP.md](./ROADMAP.md) - Long-term vision and project status
+- [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - Phase implementation details
+- [BACKLOG.md](./BACKLOG.md) - MVP features and priorities
 
 ---
 
