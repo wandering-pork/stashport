@@ -637,28 +637,96 @@ Multiple users editing same itinerary.
 
 **Sprint 2 Total:** ~8-10 hours
 
-### Sprint 3: Sharing & Onboarding (P1s)
+### Sprint 3: Visual Templates - KEY DIFFERENTIATOR (P0)
+| Feature | Effort | FR |
+|---------|--------|-----|
+| Itinerary type selection (daily/guide) | 4-6h | FR-NEW |
+| Cover photo upload + Supabase Storage | 3-4h | FR-NEW |
+| Share modal + template picker | 4-5h | FR-11 |
+| 3 templates (Clean/Bold/Minimal) | 6-8h | FR-11 |
+| 3 formats (Story/Square/Portrait) | 2-3h | FR-11 |
+| Client preview (html2canvas) | 3-4h | FR-11 |
+| Server generation (Puppeteer) | 4-5h | FR-11 |
+| Twitter/Facebook direct post | 6-8h | FR-11 |
+| Instagram/TikTok share intents | 2-3h | FR-11 |
+
+**Sprint 3 Total:** ~35-47 hours
+
+**Design Doc:** [docs/plans/2026-01-18-visual-templates-design.md](./docs/plans/2026-01-18-visual-templates-design.md)
+
+### Sprint 4: Engagement Features (P1s)
 | Feature | Effort | FR |
 |---------|--------|-----|
 | Guided Onboarding Flow | 3-4h | FR-2 |
 | Featured Itineraries | 6-8h | FR-10 |
-| Social Caption Generator | 4-5h | FR-11 |
+| Stash functionality | 3-4h | FR-10 |
 
-**Sprint 3 Total:** ~14-17 hours
+**Sprint 4 Total:** ~12-16 hours
+
+### Sprint 5: Security & Performance (P0)
+| Feature | Effort | Priority |
+|---------|--------|----------|
+| CSRF protection on all API routes | 2-3h | Critical |
+| Rate limiting (auth + API) | 3-4h | Critical |
+| Auth middleware for route protection | 2-3h | Critical |
+| Fix authorization bypass in GET /api/itineraries/[id] | 1-2h | Critical |
+| Security headers (CSP, HSTS, X-Frame-Options) | 1-2h | High |
+| Add pagination to itineraries API | 2-3h | High |
+| Implement SWR for client-side caching | 2-3h | Medium |
+| Database indexes for performance | 1-2h | High |
+
+**Sprint 5 Total:** ~16-22 hours
+
+**Full Audit Report:** See Security & Performance Audit section below.
+
+### Sprint 6: Design Refinement (Final Polish)
+| Feature | Effort | Notes |
+|---------|--------|-------|
+| UI/UX polish based on user feedback | 4-6h | After user testing |
+| Animation refinements | 2-3h | Micro-interactions |
+| Mobile responsiveness audit | 2-3h | All breakpoints |
+
+**Sprint 6 Total:** ~8-12 hours
 
 ---
 
 ## MVP Checklist
 
+### Foundation
 - [ ] Signup confirmation clarity (P0)
 - [ ] Autosave & draft recovery (P0)
 - [ ] Dashboard pagination (P1)
+
+### Discovery & Identity
 - [ ] Trip categories / tags (P1)
 - [ ] Creator identity (avatar + name) (P1)
 - [ ] Trip quick stats (P1)
+
+### Visual Templates (Key Differentiator)
+- [ ] Itinerary type selection (daily vs guide)
+- [ ] Cover photo upload
+- [ ] Share modal with template picker
+- [ ] 3 templates × 3 formats
+- [ ] Client preview + server generation
+- [ ] Twitter/Facebook direct posting
+- [ ] Instagram/TikTok share intents
+
+### Engagement
 - [ ] Guided onboarding flow (P1)
 - [ ] Featured itineraries (P1)
-- [ ] Social caption generator (P1)
+- [ ] Stash functionality (P1)
+
+### Security & Performance
+- [ ] CSRF protection
+- [ ] Rate limiting
+- [ ] Auth middleware
+- [ ] Security headers
+- [ ] API pagination
+- [ ] Client-side caching (SWR)
+
+### Final Polish
+- [ ] Design refinement pass
+- [ ] Mobile responsiveness audit
 
 ---
 
@@ -669,8 +737,11 @@ Multiple users editing same itinerary.
 | Pagination | 9 cards + Load More | Good balance |
 | Multi-day activities | Show on all days | Better visibility |
 | Maps/Location | Deferred | API costs |
-| Templates | Deferred | User wants to think more |
-| Caption generation | No AI for MVP | Keep it simple, rule-based |
+| Visual Templates | MVP priority | Key differentiator for travel creators |
+| Template rendering | Hybrid (client preview + server download) | Best UX + quality |
+| Instagram posting | Share Intent | API requires Business account |
+| Twitter/Facebook | Direct API | Easier approval, works for all accounts |
+| Itinerary types | daily + guide | Flexibility for different creator styles |
 
 ---
 
@@ -757,6 +828,97 @@ ALTER TABLE itineraries ADD COLUMN stash_count INTEGER DEFAULT 0;
 - **Caching:** Featured itineraries cached 5 minutes (client-side)
 - **Debouncing:** Autosave triggers 2s after last keystroke
 - **Code splitting:** Dynamic imports for modals and non-critical components
+
+---
+
+## Security & Performance Audit
+
+**Audit Date:** 2026-01-18
+**Overall Security Score:** 6.5/10
+**Overall Performance Score:** 7/10
+
+### Critical Security Issues (Must Fix)
+
+| Issue | Severity | Location | Fix |
+|-------|----------|----------|-----|
+| No CSRF protection | Critical | All API routes | Add CSRF token validation |
+| No rate limiting | Critical | All endpoints | Implement @upstash/ratelimit |
+| Authorization bypass | Critical | GET /api/itineraries/[id] | Add auth + ownership check |
+| Missing middleware | High | No middleware.ts | Create route protection middleware |
+| No security headers | High | next.config.ts | Add CSP, HSTS, X-Frame-Options |
+
+### Performance Issues
+
+| Issue | Impact | Location | Fix |
+|-------|--------|----------|-----|
+| N+1 query pattern | High | GET /api/itineraries | Add pagination, limit nested data |
+| Missing indexes | High | Database | Add indexes on user_id, slug, itinerary_id |
+| No client caching | Medium | Dashboard | Implement SWR with caching |
+| Inefficient updates | Medium | PUT /api/itineraries/[id] | Use upsert instead of delete+insert |
+
+### Security Fixes (Code Examples)
+
+**CSRF Protection:**
+```typescript
+// Validate origin header on mutations
+function validateCSRF(request: NextRequest): boolean {
+  const origin = request.headers.get('origin')
+  const allowedOrigins = [process.env.NEXT_PUBLIC_APP_URL]
+  return origin && allowedOrigins.includes(origin)
+}
+```
+
+**Rate Limiting:**
+```typescript
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, '60 s'),
+})
+```
+
+**Auth Middleware:**
+```typescript
+// middleware.ts
+export async function middleware(request: NextRequest) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+}
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/itinerary/:path*'],
+}
+```
+
+### Database Indexes to Add
+
+```sql
+CREATE INDEX idx_itineraries_user_id_created_at
+  ON itineraries(user_id, created_at DESC);
+
+CREATE INDEX idx_itineraries_slug
+  ON itineraries(slug) WHERE is_public = true;
+
+CREATE INDEX idx_days_itinerary_id
+  ON days(itinerary_id, day_number);
+
+CREATE INDEX idx_activities_day_id
+  ON activities(day_id);
+```
+
+### Positive Findings
+
+- TypeScript strict mode enabled
+- Zod input validation on all forms
+- Supabase RLS policies in place
+- No hardcoded secrets
+- UUID primary keys (non-sequential)
+- No eval() or dangerouslySetInnerHTML
 
 ---
 
