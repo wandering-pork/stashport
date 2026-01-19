@@ -4,6 +4,8 @@ export interface User {
   auth_id: string | null
   email: string
   name: string | null
+  display_name: string | null
+  avatar_color: string
   created_at: string
   updated_at: string
 }
@@ -39,6 +41,7 @@ export interface Itinerary {
   slug: string
   is_public: boolean
   stashed_from_id: string | null
+  budget_level: number | null
   created_at: string
   updated_at: string
 }
@@ -46,6 +49,11 @@ export interface Itinerary {
 // UI models (transformed from database models)
 export interface ItineraryWithDays extends Itinerary {
   days: (Day & { activities: Activity[] })[]
+  tags?: string[]
+  creator?: {
+    display_name: string | null
+    avatar_color: string
+  }
 }
 
 export interface AuthState {

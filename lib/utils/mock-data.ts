@@ -5,6 +5,8 @@ export const mockUser: User = {
   auth_id: null,
   email: 'user@example.com',
   name: 'John Doe',
+  display_name: 'John D.',
+  avatar_color: '#14b8a6',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 }

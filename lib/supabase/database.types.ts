@@ -15,6 +15,8 @@ export type Database = {
           auth_id: string | null
           email: string
           name: string | null
+          display_name: string | null
+          avatar_color: string
           created_at: string
           updated_at: string
         }
@@ -23,6 +25,8 @@ export type Database = {
           auth_id?: string | null
           email: string
           name?: string | null
+          display_name?: string | null
+          avatar_color?: string
           created_at?: string
           updated_at?: string
         }
@@ -31,6 +35,8 @@ export type Database = {
           auth_id?: string | null
           email?: string
           name?: string | null
+          display_name?: string | null
+          avatar_color?: string
           created_at?: string
           updated_at?: string
         }
@@ -54,6 +60,7 @@ export type Database = {
           slug: string
           is_public: boolean
           stashed_from_id: string | null
+          budget_level: number | null
           created_at: string
           updated_at: string
         }
@@ -66,6 +73,7 @@ export type Database = {
           slug: string
           is_public?: boolean
           stashed_from_id?: string | null
+          budget_level?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -78,6 +86,7 @@ export type Database = {
           slug?: string
           is_public?: boolean
           stashed_from_id?: string | null
+          budget_level?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -176,6 +185,35 @@ export type Database = {
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "days"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      trip_tags: {
+        Row: {
+          id: string
+          itinerary_id: string
+          tag: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          itinerary_id: string
+          tag: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          itinerary_id?: string
+          tag?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_tags_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
             referencedColumns: ["id"]
           }
         ]
