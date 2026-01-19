@@ -20,12 +20,14 @@ Prioritized backlog aligned with MVP Scope and PRD.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/itineraries` | Required | Fetch user's itineraries with nested days/activities |
-| POST | `/api/itineraries` | Required | Create new itinerary |
+| GET | `/api/itineraries` | Required | Fetch user's itineraries with nested days/activities + tags |
+| POST | `/api/itineraries` | Required | Create new itinerary (supports tags, budgetLevel) |
 | GET | `/api/itineraries/[id]` | Required | Get single itinerary by ID |
-| PUT | `/api/itineraries/[id]` | Required | Update itinerary (full replace) |
+| PUT | `/api/itineraries/[id]` | Required | Update itinerary (supports tags, budgetLevel) |
 | DELETE | `/api/itineraries/[id]` | Required | Delete itinerary (cascade) |
-| GET | `/api/itineraries/public/[slug]` | None | Get public itinerary by slug |
+| GET | `/api/itineraries/public/[slug]` | None | Get public itinerary with creator info + tags |
+| GET | `/api/users/profile` | Required | Get user profile (display name, avatar) |
+| PUT | `/api/users/profile` | Required | Update display name |
 
 ### Planned Endpoints (MVP)
 
@@ -34,8 +36,6 @@ Prioritized backlog aligned with MVP Scope and PRD.
 | GET | `/api/itineraries/featured` | None | Get 6 random public itineraries | Featured Itineraries |
 | POST | `/api/itineraries/stash` | Required | Deep copy public itinerary to user's trips | Stash |
 | POST | `/api/auth/resend-confirmation` | None | Resend email confirmation | Signup Confirmation |
-| GET | `/api/users/profile` | Required | Get user profile (display name, avatar) | Creator Identity |
-| PUT | `/api/users/profile` | Required | Update display name/avatar | Creator Identity |
 
 ### Response Format
 
@@ -692,15 +692,27 @@ Multiple users editing same itinerary.
 
 ## MVP Checklist
 
-### Foundation
-- [ ] Signup confirmation clarity (P0)
-- [ ] Autosave & draft recovery (P0)
-- [ ] Dashboard pagination (P1)
+### Foundation ✅ SPRINT 1 COMPLETE
+- [x] Signup confirmation clarity (P0) - Completed 2026-01-18
+- [x] Autosave & draft recovery (P0) - Completed 2026-01-18, Fix verified 2026-01-19
+- [x] Dashboard pagination (P1) - Completed 2026-01-18
 
-### Discovery & Identity
-- [ ] Trip categories / tags (P1)
-- [ ] Creator identity (avatar + name) (P1)
-- [ ] Trip quick stats (P1)
+**Sprint 1 Verification (2026-01-19):**
+- Activity filtering prevents autosave validation errors
+- Edit mode shows SaveStatusIndicator only (no Save button)
+- All browser tests passed
+
+### Discovery & Identity ✅ SPRINT 2 COMPLETE
+- [x] Trip categories / tags (P1) - Completed 2026-01-20
+- [x] Creator identity (avatar + name) (P1) - Completed 2026-01-20
+- [x] Trip quick stats (P1) - Completed 2026-01-20
+
+**Sprint 2 Completed (2026-01-20):**
+- Design Doc: [docs/plans/2026-01-19-sprint2-discovery-identity-design.md](./docs/plans/2026-01-19-sprint2-discovery-identity-design.md)
+- Implementation Plan: [docs/plans/2026-01-19-sprint2-implementation-plan.md](./docs/plans/2026-01-19-sprint2-implementation-plan.md)
+- Database: trip_tags table, users.display_name/avatar_color, itineraries.budget_level
+- Components: Avatar, TagSelector, BudgetSelector, TagPill
+- API: GET/PUT /api/users/profile, updated itineraries endpoints with tags/budget
 
 ### Visual Templates (Key Differentiator)
 - [ ] Itinerary type selection (daily vs guide)
@@ -922,6 +934,6 @@ CREATE INDEX idx_activities_day_id
 
 ---
 
-**Last Updated:** January 2026
-**Status:** MVP-Focused Backlog
+**Last Updated:** January 20, 2026
+**Status:** MVP-Focused Backlog | Sprint 1 Complete ✅ | Sprint 2 Complete ✅
 **Aligned With:** stashport_mvp_scope.md, stashport_prd.md
