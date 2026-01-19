@@ -1,16 +1,17 @@
 # Sprint 2 Handover Document
-**Date:** 2026-01-19
+**Date:** 2026-01-20
 **Sprint:** Discovery & Identity Implementation
+**Status:** ✅ COMPLETE
 
 ---
 
 ## Summary
 
-Sprint 2 adds trip tags, creator identity (display name + avatar), and budget level to enhance trip discovery. All frontend code is complete. **Database migration requires manual execution.**
+Sprint 2 adds trip tags, creator identity (display name + avatar), and budget level to enhance trip discovery. All code and database migrations are complete.
 
 ---
 
-## Completed Tasks (16/17)
+## Completed Tasks (17/17)
 
 | # | Task | Status | Files |
 |---|------|--------|-------|
@@ -21,7 +22,7 @@ Sprint 2 adds trip tags, creator identity (display name + avatar), and budget le
 | 5 | TagPill component | ✅ | `components/ui/tag-pill.tsx` |
 | 6 | TagSelector component | ✅ | `components/ui/tag-selector.tsx` |
 | 7 | BudgetSelector component | ✅ | `components/ui/budget-selector.tsx` |
-| 8 | **Database migrations** | ⏳ MANUAL | Supabase Dashboard |
+| 8 | **Database migrations** | ✅ | Applied via Supabase MCP (2026-01-20) |
 | 9 | GET /api/itineraries | ✅ | `app/api/itineraries/route.ts` |
 | 10 | POST /api/itineraries | ✅ | `app/api/itineraries/route.ts` |
 | 11 | PUT /api/itineraries/[id] | ✅ | `app/api/itineraries/[id]/route.ts` |
@@ -30,93 +31,21 @@ Sprint 2 adds trip tags, creator identity (display name + avatar), and budget le
 | 14 | Itinerary Form UI | ✅ | `components/itinerary/itinerary-form.tsx` |
 | 15 | Trip Card UI | ✅ | `components/itinerary/trip-card.tsx` |
 | 16 | Public Trip View UI | ✅ | `app/t/[slug]/page.tsx` |
-| 17 | Final verification | ✅ | TypeScript passes, lint has pre-existing warnings only |
+| 17 | Final verification | ✅ | Build passes, documentation updated |
 
 ---
 
-## Pending: Database Migration
+## Database Migration ✅ APPLIED
 
-**Run this SQL in Supabase Dashboard > SQL Editor:**
+**Applied via Supabase MCP on 2026-01-20**
 
-```sql
--- Add display_name and avatar_color to users
-ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS display_name VARCHAR(100),
-  ADD COLUMN IF NOT EXISTS avatar_color VARCHAR(7) DEFAULT '#14b8a6';
+Migration name: `sprint2_discovery_identity`
 
--- Add budget_level to itineraries
-ALTER TABLE itineraries
-  ADD COLUMN IF NOT EXISTS budget_level INTEGER CHECK (budget_level >= 1 AND budget_level <= 4);
-
--- Create trip_tags table
-CREATE TABLE IF NOT EXISTS trip_tags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  itinerary_id UUID REFERENCES itineraries(id) ON DELETE CASCADE,
-  tag VARCHAR(50) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(itinerary_id, tag)
-);
-
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_trip_tags_tag ON trip_tags(tag);
-CREATE INDEX IF NOT EXISTS idx_trip_tags_itinerary_id ON trip_tags(itinerary_id);
-
--- Enable RLS
-ALTER TABLE trip_tags ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for trip_tags
-CREATE POLICY "Users can view tags on own itineraries"
-  ON trip_tags FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM itineraries
-      WHERE itineraries.id = trip_tags.itinerary_id
-      AND itineraries.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can view tags on public itineraries"
-  ON trip_tags FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM itineraries
-      WHERE itineraries.id = trip_tags.itinerary_id
-      AND itineraries.is_public = true
-    )
-  );
-
-CREATE POLICY "Users can insert tags on own itineraries"
-  ON trip_tags FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM itineraries
-      WHERE itineraries.id = trip_tags.itinerary_id
-      AND itineraries.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can delete tags on own itineraries"
-  ON trip_tags FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM itineraries
-      WHERE itineraries.id = trip_tags.itinerary_id
-      AND itineraries.user_id = auth.uid()
-    )
-  );
-```
-
-**Verify migration:**
-```sql
-SELECT column_name FROM information_schema.columns WHERE table_name = 'itineraries';
--- Should include: budget_level
-
-SELECT column_name FROM information_schema.columns WHERE table_name = 'users';
--- Should include: display_name, avatar_color
-
-SELECT * FROM trip_tags LIMIT 1;
--- Should return empty (no error)
-```
+**Verified schema changes:**
+- `itineraries.budget_level` (integer) ✅
+- `users.display_name` (varchar) ✅
+- `users.avatar_color` (varchar) ✅
+- `trip_tags` table with RLS policies ✅
 
 ---
 
@@ -231,16 +160,16 @@ creator?: { display_name: string | null, avatar_color: string }
 
 ---
 
-## Known Issues
+## Resolved Issues
 
-1. **Pre-existing build error:** `app/auth/callback/page.tsx` has useSearchParams without Suspense boundary (unrelated to Sprint 2)
-2. **Lint warnings:** Pre-existing `@typescript-eslint/no-explicit-any` warnings in API routes
+1. **Build error fixed:** `app/auth/callback/page.tsx` - Added Suspense boundary for useSearchParams (2026-01-20)
+2. **Lint warnings:** Pre-existing `@typescript-eslint/no-explicit-any` warnings in API routes (not blocking)
 
 ---
 
 ## Next Steps
 
-1. Run database migration in Supabase Dashboard
-2. Test all features manually
-3. Consider adding user profile edit UI (display name)
-4. Consider running `/documentation-sync` to update CLAUDE.md
+1. ✅ ~~Run database migration in Supabase Dashboard~~ - Applied via MCP
+2. Test all features manually in browser
+3. Consider adding user profile edit UI (display name) - Sprint 3+
+4. ✅ ~~Run `/documentation-sync` to update CLAUDE.md~~ - Done
