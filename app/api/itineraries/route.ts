@@ -42,7 +42,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(itineraries)
+    // Fetch tags for all itineraries
+    const itineraryIds = itineraries?.map(i => i.id) || []
+
+    let tagsMap: Record<string, string[]> = {}
+    if (itineraryIds.length > 0) {
+      const { data: tags, error: tagsError } = await supabase
+        .from('trip_tags')
+        .select('itinerary_id, tag')
+        .in('itinerary_id', itineraryIds)
+
+      if (!tagsError && tags) {
+        tagsMap = tags.reduce((acc, { itinerary_id, tag }) => {
+          if (!acc[itinerary_id]) acc[itinerary_id] = []
+          acc[itinerary_id].push(tag)
+          return acc
+        }, {} as Record<string, string[]>)
+      }
+    }
+
+    // Merge tags into itineraries
+    const itinerariesWithTags = itineraries?.map(itinerary => ({
+      ...itinerary,
+      tags: tagsMap[itinerary.id] || [],
+    }))
+
+    return NextResponse.json(itinerariesWithTags)
   } catch (err) {
     console.error('Unexpected error:', err)
     return NextResponse.json(
@@ -83,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, destination, isPublic, days } = body
+    const { title, description, destination, isPublic, days, tags, budgetLevel } = body
 
     // Validate itinerary data
     const itineraryValidation = itinerarySchema.safeParse({
@@ -91,6 +116,8 @@ export async function POST(request: NextRequest) {
       description,
       destination,
       isPublic,
+      budgetLevel,
+      tags,
     })
 
     if (!itineraryValidation.success) {
@@ -115,6 +142,7 @@ export async function POST(request: NextRequest) {
           destination: itineraryValidation.data.destination || null,
           slug,
           is_public: itineraryValidation.data.isPublic,
+          budget_level: itineraryValidation.data.budgetLevel || null,
           stashed_from_id: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -129,6 +157,26 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create itinerary' },
         { status: 500 }
       )
+    }
+
+    // Insert tags if provided
+    const validatedTags = itineraryValidation.data.tags || []
+    if (validatedTags.length > 0) {
+      const tagsToInsert = validatedTags.map(tag => ({
+        id: randomUUID(),
+        itinerary_id: itinerary.id,
+        tag,
+        created_at: new Date().toISOString(),
+      }))
+
+      const { error: tagsError } = await supabase
+        .from('trip_tags')
+        .insert(tagsToInsert)
+
+      if (tagsError) {
+        console.error('Tags creation error:', tagsError)
+        // Continue anyway - itinerary was created
+      }
     }
 
     // Create days if provided
@@ -239,7 +287,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(itinerary)
     }
 
-    return NextResponse.json(completeItinerary, { status: 201 })
+    // Fetch tags for the created itinerary
+    const { data: insertedTags } = await supabase
+      .from('trip_tags')
+      .select('tag')
+      .eq('itinerary_id', itinerary.id)
+
+    const response = {
+      ...completeItinerary,
+      tags: insertedTags?.map(t => t.tag) || [],
+    }
+
+    return NextResponse.json(response, { status: 201 })
   } catch (err: any) {
     console.error('Unexpected error:', err)
     return NextResponse.json(
