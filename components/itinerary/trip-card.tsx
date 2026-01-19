@@ -3,7 +3,8 @@
 import { ItineraryWithDays } from '@/lib/types/models'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2 } from 'lucide-react'
+import { TagPill } from '@/components/ui/tag-pill'
+import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface TripCardProps {
@@ -80,9 +81,18 @@ export function TripCard({
         </h3>
 
         {trip.description && (
-          <p className="text-sm text-neutral-600 line-clamp-2 mb-4">
+          <p className="text-sm text-neutral-600 line-clamp-2 mb-3">
             {trip.description}
           </p>
+        )}
+
+        {/* Tags */}
+        {trip.tags && trip.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {trip.tags.slice(0, 3).map((tag) => (
+              <TagPill key={tag} tag={tag} size="sm" />
+            ))}
+          </div>
         )}
 
         {/* Stats */}
@@ -110,6 +120,20 @@ export function TripCard({
               </span>
             </div>
           </div>
+
+          {trip.budget_level && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent-50">
+                <DollarSign className="w-4 h-4 text-accent-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-neutral-500">Budget</span>
+                <span className="text-sm font-semibold text-neutral-900">
+                  {'$'.repeat(trip.budget_level)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer with date and actions */}
