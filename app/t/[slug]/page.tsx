@@ -3,6 +3,8 @@
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Avatar } from '@/components/ui/avatar'
+import { TagPill } from '@/components/ui/tag-pill'
 import { ItineraryWithDays } from '@/lib/types/models'
 import { MapPin, Calendar, Clock, Plane, Loader2 } from 'lucide-react'
 
@@ -94,12 +96,37 @@ export default function PublicTripPage() {
               <h1 className="text-4xl font-bold text-neutral-900 mb-2">
                 {trip.title}
               </h1>
+
+              {/* Creator Attribution */}
+              {trip.creator && (
+                <div className="flex items-center gap-2 mb-3">
+                  <Avatar
+                    name={trip.creator.display_name}
+                    color={trip.creator.avatar_color}
+                    size="sm"
+                  />
+                  <span className="text-sm text-neutral-600">
+                    Created by {trip.creator.display_name || 'Anonymous Traveler'}
+                  </span>
+                </div>
+              )}
+
               {trip.destination && (
-                <div className="flex items-center gap-2 text-neutral-600 mb-4">
+                <div className="flex items-center gap-2 text-neutral-600 mb-3">
                   <MapPin className="w-5 h-5 text-primary-500" />
                   <span>{trip.destination}</span>
                 </div>
               )}
+
+              {/* Tags */}
+              {trip.tags && trip.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {trip.tags.map((tag) => (
+                    <TagPill key={tag} tag={tag} size="md" />
+                  ))}
+                </div>
+              )}
+
               {trip.description && (
                 <p className="text-neutral-600 max-w-2xl">{trip.description}</p>
               )}
