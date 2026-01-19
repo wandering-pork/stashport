@@ -1,7 +1,7 @@
 # Stashport Technical Architecture
 
-**Version:** 0.4.0
-**Last Updated:** January 11, 2026
+**Version:** 0.6.0
+**Last Updated:** January 20, 2026
 **Status:** Production Ready
 
 ---
@@ -69,6 +69,7 @@ app/
 ├── auth/
 │   ├── login/page.tsx       # Login page
 │   ├── signup/page.tsx      # Signup page
+│   ├── confirm-email/page.tsx # Email confirmation page
 │   ├── callback/route.ts    # OAuth callback
 │   └── logout/route.ts      # Sign out
 ├── t/
@@ -97,7 +98,12 @@ components/
 │   ├── textarea.tsx         # Textarea component
 │   ├── card.tsx             # Card component
 │   ├── toggle.tsx           # Toggle switch
-│   └── country-select.tsx   # Country dropdown
+│   ├── country-select.tsx   # Country dropdown
+│   ├── save-status.tsx      # Autosave status indicator
+│   ├── avatar.tsx           # User avatar with initials
+│   ├── tag-pill.tsx         # Tag display pill
+│   ├── tag-selector.tsx     # Multi-select tag picker
+│   └── budget-selector.tsx  # Budget level selector
 └── auth/
     └── auth-context.tsx     # Global auth state
 
@@ -105,6 +111,10 @@ lib/
 ├── auth/
 │   ├── auth-context.tsx     # useAuth() hook
 │   └── auth-utils.ts        # Helper functions
+├── constants/
+│   └── tags.ts              # TRIP_TAGS, BUDGET_LEVELS
+├── hooks/
+│   └── use-autosave.ts      # Debounced autosave hook
 ├── supabase/
 │   ├── client.ts            # Client-side Supabase
 │   └── server.ts            # Server-side Supabase
@@ -167,7 +177,11 @@ Dashboard Page (Smart)
 - `DELETE /api/itineraries/[id]` - Delete trip
 
 #### Public Itineraries
-- `GET /api/itineraries/public/[slug]` - View public trip
+- `GET /api/itineraries/public/[slug]` - View public trip (includes creator info and tags)
+
+#### User Profile
+- `GET /api/users/profile` - Get current user's profile
+- `PUT /api/users/profile` - Update display name
 
 #### Authentication
 - `POST /auth/signup` - Register with email
@@ -257,6 +271,8 @@ CREATE TABLE users (
   id UUID PRIMARY KEY,
   auth_id UUID NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
+  display_name VARCHAR(100),          -- Sprint 2: Creator identity
+  avatar_color VARCHAR(7) DEFAULT '#14b8a6',  -- Sprint 2: Avatar color
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -270,6 +286,7 @@ CREATE TABLE itineraries (
   destination TEXT,
   is_public BOOLEAN DEFAULT false,
   slug TEXT UNIQUE,
+  budget_level INTEGER CHECK (budget_level >= 1 AND budget_level <= 4),  -- Sprint 2
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -297,6 +314,16 @@ CREATE TABLE activities (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Trip tags table (Sprint 2: Discovery & Identity)
+CREATE TABLE trip_tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  itinerary_id UUID REFERENCES itineraries(id) ON DELETE CASCADE,
+  tag VARCHAR(50) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(itinerary_id, tag)
+);
+-- Tags: Adventure, Romantic, Budget, Luxury, Family, Solo, Food Tour, Road Trip
 ```
 
 **Row Level Security (RLS) Policies:**
@@ -326,7 +353,8 @@ CREATE POLICY "Users can delete own itineraries"
 Users (1)
   ├─ (1:many) ─┬─ Itineraries
                   ├─ (1:many) ─┬─ Days
-                                 ├─ (1:many) ─┬─ Activities
+                  │              ├─ (1:many) ─┬─ Activities
+                  └─ (1:many) ─┬─ TripTags
 ```
 
 ---
@@ -427,10 +455,12 @@ Users (1)
 1. User visits /auth/signup
 2. Fills email and password
 3. Frontend validates and POSTs to Supabase Auth
-4. Supabase creates auth user
-5. Server-side code creates user profile in users table
-6. Session stored in HTTP-only cookie
-7. User redirected to /dashboard
+4. Supabase creates auth user and sends confirmation email
+5. User redirected to /auth/confirm-email with email param
+6. User clicks confirmation link in email
+7. Redirected to /auth/callback which handles session
+8. Server-side code creates user profile in users table
+9. User redirected to /dashboard
 ```
 
 ### OAuth (Google/Facebook)
@@ -808,5 +838,5 @@ Custom domain (Phase 4)
 
 ---
 
-**Stashport Architecture - v0.4.0**
+**Stashport Architecture - v0.6.0**
 *Well-documented, scalable, and maintainable.*
