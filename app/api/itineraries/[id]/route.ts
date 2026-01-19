@@ -84,7 +84,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, description, destination, isPublic, days } = body
+    const { title, description, destination, isPublic, days, tags, budgetLevel } = body
 
     // Validate itinerary data
     const itineraryValidation = itinerarySchema.safeParse({
@@ -92,6 +92,8 @@ export async function PUT(
       description,
       destination,
       isPublic,
+      budgetLevel,
+      tags,
     })
 
     if (!itineraryValidation.success) {
@@ -109,6 +111,7 @@ export async function PUT(
         description: itineraryValidation.data.description || null,
         destination: itineraryValidation.data.destination || null,
         is_public: itineraryValidation.data.isPublic,
+        budget_level: itineraryValidation.data.budgetLevel || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -121,6 +124,34 @@ export async function PUT(
         { error: 'Failed to update itinerary' },
         { status: 500 }
       )
+    }
+
+    // Update tags - delete existing and insert new
+    const { error: deleteTagsError } = await supabase
+      .from('trip_tags')
+      .delete()
+      .eq('itinerary_id', id)
+
+    if (deleteTagsError) {
+      console.error('Delete tags error:', deleteTagsError)
+    }
+
+    const validatedTags = itineraryValidation.data.tags || []
+    if (validatedTags.length > 0) {
+      const tagsToInsert = validatedTags.map(tag => ({
+        id: randomUUID(),
+        itinerary_id: id,
+        tag,
+        created_at: new Date().toISOString(),
+      }))
+
+      const { error: insertTagsError } = await supabase
+        .from('trip_tags')
+        .insert(tagsToInsert)
+
+      if (insertTagsError) {
+        console.error('Insert tags error:', insertTagsError)
+      }
     }
 
     // Handle days update if provided
@@ -243,7 +274,18 @@ export async function PUT(
       return NextResponse.json(updatedItinerary)
     }
 
-    return NextResponse.json(completeItinerary)
+    // Fetch tags
+    const { data: updatedTags } = await supabase
+      .from('trip_tags')
+      .select('tag')
+      .eq('itinerary_id', id)
+
+    const response = {
+      ...completeItinerary,
+      tags: updatedTags?.map(t => t.tag) || [],
+    }
+
+    return NextResponse.json(response)
   } catch (err: any) {
     console.error('Unexpected error:', err)
     return NextResponse.json(
