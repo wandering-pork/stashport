@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +10,12 @@ import { Toggle } from '@/components/ui/toggle'
 import { DateRangeCalendar } from '@/components/ui/date-range-calendar'
 import { DayCards } from '@/components/itinerary/day-cards'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { SaveStatusIndicator } from '@/components/ui/save-status'
+import { TagSelector } from '@/components/ui/tag-selector'
+import { BudgetSelector } from '@/components/ui/budget-selector'
 import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validation'
 import { ItineraryWithDays } from '@/lib/types/models'
+import { useAutosave } from '@/lib/hooks/use-autosave'
 import { Trash2, Plus } from 'lucide-react'
 
 interface ItineraryFormProps {
@@ -43,6 +47,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
   const [description, setDescription] = useState(initialData?.description || '')
   const [destination, setDestination] = useState(initialData?.destination || '')
   const [isPublic, setIsPublic] = useState(initialData?.is_public ?? true)
+  const [tags, setTags] = useState<string[]>(initialData?.tags || [])
+  const [budgetLevel, setBudgetLevel] = useState<number | null>(initialData?.budget_level || null)
   // Helper to normalize date strings (handle ISO format)
   const normalizeDate = (dateStr: string | null | undefined): string => {
     if (!dateStr) return ''
@@ -73,6 +79,88 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
 
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [draftRecovered, setDraftRecovered] = useState(false)
+
+  // Autosave configuration
+  const storageKey = initialData
+    ? `stashport-draft-${initialData.id}`
+    : 'stashport-draft-new'
+
+  const autosave = useAutosave<{
+    title: string
+    description: string
+    destination: string
+    isPublic: boolean
+    startDate: string
+    endDate: string
+    days: DayForm[]
+    tags: string[]
+    budgetLevel: number | null
+  }>({
+    storageKey,
+    debounceMs: 2000,
+    syncToServer: !!initialData,
+    itineraryId: initialData?.id,
+  })
+
+  // Create form data object for autosave
+  const formData = useMemo(() => ({
+    title,
+    description,
+    destination,
+    isPublic,
+    startDate,
+    endDate,
+    days,
+    tags,
+    budgetLevel,
+  }), [title, description, destination, isPublic, startDate, endDate, days, tags, budgetLevel])
+
+  // Trigger autosave when form data changes
+  useEffect(() => {
+    // Skip initial render and when data matches initial (no changes)
+    if (!draftRecovered && !initialData) {
+      // For new trips, check for and recover drafts on mount
+      const draft = autosave.loadDraft()
+      if (draft) {
+        setTitle(draft.title || '')
+        setDescription(draft.description || '')
+        setDestination(draft.destination || '')
+        setIsPublic(draft.isPublic ?? true)
+        setStartDate(draft.startDate || '')
+        setEndDate(draft.endDate || '')
+        if (draft.days && draft.days.length > 0) {
+          setDays(draft.days)
+        }
+        setDraftRecovered(true)
+        return
+      }
+    }
+    setDraftRecovered(true)
+
+    // Only autosave if there are actual changes
+    if (title || description || destination || days.length > 0) {
+      // Filter out incomplete activities to prevent validation errors during autosave
+      const filteredDays = days.map(day => ({
+        ...day,
+        activities: day.activities.filter(activity => activity.title.trim() !== '')
+      }))
+
+      autosave.updateData({
+        ...formData,
+        days: filteredDays,
+        tags,
+        budgetLevel,
+      })
+    }
+  }, [formData, initialData, draftRecovered])
+
+  // Clear draft on successful save (for new trips)
+  const clearDraftOnSuccess = useCallback(() => {
+    if (!initialData) {
+      autosave.clearDraft()
+    }
+  }, [initialData, autosave])
 
   // Generate days from date range
   const generateDaysFromDates = (start: string, end: string) => {
@@ -123,6 +211,17 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
       destination !== initialData.destination ||
       isPublic !== initialData.is_public
     ) {
+      return true
+    }
+
+    // Check tags
+    const initialTags = initialData.tags || []
+    if (tags.length !== initialTags.length || !tags.every(t => initialTags.includes(t))) {
+      return true
+    }
+
+    // Check budget
+    if (budgetLevel !== initialData.budget_level) {
       return true
     }
 
@@ -330,6 +429,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         description: itineraryValidation.data.description || null,
         destination: itineraryValidation.data.destination || null,
         isPublic: itineraryValidation.data.isPublic,
+        budgetLevel,
+        tags,
         days: validatedDays,
       }
 
@@ -360,6 +461,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         setDescription(createdItinerary.description || '')
         setDestination(createdItinerary.destination || '')
         setIsPublic(createdItinerary.is_public)
+        setTags(createdItinerary.tags || [])
+        setBudgetLevel(createdItinerary.budget_level || null)
 
         if (createdItinerary.days) {
           setDays(
@@ -379,8 +482,9 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         }
       }
 
-      // Only navigate away when creating new trip
+      // Clear draft and navigate away when creating new trip
       if (!initialData) {
+        clearDraftOnSuccess()
         router.push('/dashboard')
       }
     } catch (err: any) {
@@ -538,6 +642,35 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
                 />
               </div>
             </div>
+
+            {/* Divider */}
+            <div className="border-t border-neutral-200" />
+
+            {/* Tags Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Trip Categories (optional)
+              </label>
+              <TagSelector
+                selected={tags}
+                onChange={setTags}
+                max={3}
+              />
+              <p className="text-xs text-neutral-400 mt-2">
+                Select up to 3 categories to help others discover your trip
+              </p>
+            </div>
+
+            {/* Budget Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Budget Level (optional)
+              </label>
+              <BudgetSelector
+                value={budgetLevel}
+                onChange={setBudgetLevel}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -577,7 +710,17 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
 
       {/* Sticky Footer with Actions */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white/95 backdrop-blur-sm shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex gap-4 justify-end">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+          {/* Save Status Indicator - Left Side */}
+          <SaveStatusIndicator
+            status={autosave.status}
+            lastSaved={autosave.lastSaved}
+            error={autosave.error}
+            className="flex-1"
+          />
+
+          {/* Actions - Right Side */}
+          <div className="flex gap-4">
           <Button
             type="button"
             variant="tertiary"
@@ -587,16 +730,17 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
           >
             {initialData ? 'Close' : 'Cancel'}
           </Button>
-          {isModified && (
+          {!initialData && isModified && (
             <Button
               type="submit"
               isLoading={isSubmitting || isLoading}
               disabled={isSubmitting || isLoading}
               className="font-heading font-bold min-w-[160px]"
             >
-              {initialData ? 'Save Changes' : 'Create Trip'}
+              Create Trip
             </Button>
           )}
+          </div>
         </div>
       </div>
     </form>
