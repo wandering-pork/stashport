@@ -35,11 +35,17 @@ export function CoverUpload({ value, onChange, disabled = false }: CoverUploadPr
 
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Please upload a JPG, PNG, or WebP image')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
       return
     }
 
     if (file.size > maxSize) {
       setUploadError('File size must be less than 5MB')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
       return
     }
 
@@ -136,6 +142,7 @@ export function CoverUpload({ value, onChange, disabled = false }: CoverUploadPr
                 onClick={handleRemove}
                 disabled={disabled || isUploading}
                 className="absolute top-2 right-2"
+                aria-label="Remove cover photo"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -148,14 +155,25 @@ export function CoverUpload({ value, onChange, disabled = false }: CoverUploadPr
           variant="default"
           className={cn(
             'border-2 border-dashed transition-colors cursor-pointer',
+            'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
             dragActive && 'border-primary-500 bg-primary-50',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
+          role="button"
+          tabIndex={disabled || isUploading ? -1 : 0}
+          aria-label="Upload cover photo"
+          aria-describedby="upload-requirements"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={() => {
             if (!disabled && !isUploading) {
+              fileInputRef.current?.click()
+            }
+          }}
+          onKeyDown={(e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isUploading) {
+              e.preventDefault()
               fileInputRef.current?.click()
             }
           }}
@@ -172,7 +190,7 @@ export function CoverUpload({ value, onChange, disabled = false }: CoverUploadPr
               <p className="text-sm font-medium text-gray-700 mb-1">
                 {isUploading ? 'Uploading...' : 'Drop image here or click to browse'}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500" id="upload-requirements">
                 JPG, PNG, or WebP • Max 5MB
               </p>
             </div>
