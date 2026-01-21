@@ -13,8 +13,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { SaveStatusIndicator } from '@/components/ui/save-status'
 import { TagSelector } from '@/components/ui/tag-selector'
 import { BudgetSelector } from '@/components/ui/budget-selector'
+import { TypeSelector } from '@/components/itinerary/type-selector'
+import { CoverUpload } from '@/components/itinerary/cover-upload'
 import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validation'
-import { ItineraryWithDays } from '@/lib/types/models'
+import { ItineraryWithDays, ItineraryType } from '@/lib/types/models'
+import { ItineraryTypeKey } from '@/lib/constants/templates'
 import { useAutosave } from '@/lib/hooks/use-autosave'
 import { Trash2, Plus } from 'lucide-react'
 
@@ -49,6 +52,12 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
   const [isPublic, setIsPublic] = useState(initialData?.is_public ?? true)
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
   const [budgetLevel, setBudgetLevel] = useState<number | null>(initialData?.budget_level || null)
+  const [itineraryType, setItineraryType] = useState<ItineraryTypeKey>(
+    (initialData?.type as ItineraryTypeKey) || 'daily'
+  )
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(
+    initialData?.cover_photo_url || null
+  )
   // Helper to normalize date strings (handle ISO format)
   const normalizeDate = (dateStr: string | null | undefined): string => {
     if (!dateStr) return ''
@@ -96,6 +105,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
     days: DayForm[]
     tags: string[]
     budgetLevel: number | null
+    itineraryType: ItineraryTypeKey
+    coverPhotoUrl: string | null
   }>({
     storageKey,
     debounceMs: 2000,
@@ -114,7 +125,9 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
     days,
     tags,
     budgetLevel,
-  }), [title, description, destination, isPublic, startDate, endDate, days, tags, budgetLevel])
+    itineraryType,
+    coverPhotoUrl,
+  }), [title, description, destination, isPublic, startDate, endDate, days, tags, budgetLevel, itineraryType, coverPhotoUrl])
 
   // Trigger autosave when form data changes
   useEffect(() => {
@@ -431,6 +444,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         isPublic: itineraryValidation.data.isPublic,
         budgetLevel,
         tags,
+        type: itineraryType,
+        cover_photo_url: coverPhotoUrl,
         days: validatedDays,
       }
 
@@ -671,6 +686,20 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
                 onChange={setBudgetLevel}
               />
             </div>
+
+            {/* Type Section */}
+            <TypeSelector
+              value={itineraryType}
+              onChange={setItineraryType}
+              disabled={isLoading || isSubmitting}
+            />
+
+            {/* Cover Photo Section */}
+            <CoverUpload
+              value={coverPhotoUrl}
+              onChange={setCoverPhotoUrl}
+              disabled={isLoading || isSubmitting}
+            />
           </CardContent>
         </Card>
 

@@ -143,6 +143,8 @@ export async function POST(request: NextRequest) {
           slug,
           is_public: itineraryValidation.data.isPublic,
           budget_level: itineraryValidation.data.budgetLevel || null,
+          type: body.type || 'daily',
+          cover_photo_url: body.cover_photo_url || null,
           stashed_from_id: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

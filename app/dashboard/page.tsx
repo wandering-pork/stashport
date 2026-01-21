@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, StatCard } from '@/components/ui/card'
 import { TripCard } from '@/components/itinerary/trip-card'
 import { ItineraryWithDays } from '@/lib/types/models'
-import { MapPin, Plane, Loader2, Globe, Lock, Plus, Compass, ArrowRight } from 'lucide-react'
+import { MapPin, Plane, Loader2, Globe, Lock, Plus, Compass, ArrowRight, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+
+const PAGE_SIZE = 9
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -18,6 +20,10 @@ export default function DashboardPage() {
   const [toDelete, setToDelete] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Pagination state
+  const [publicPage, setPublicPage] = useState(1)
+  const [privatePage, setPrivatePage] = useState(1)
 
   // Fetch itineraries on mount
   useEffect(() => {
@@ -51,8 +57,27 @@ export default function DashboardPage() {
     fetchItineraries()
   }, [user, authLoading, router])
 
-  const publicTrips = itineraries.filter(it => it.is_public)
-  const privateTrips = itineraries.filter(it => !it.is_public)
+  // Reset pagination when itineraries change significantly (e.g., after delete)
+  useEffect(() => {
+    // Reset to page 1 to avoid showing empty pages
+    const maxPublicPages = Math.ceil(itineraries.filter(it => it.is_public).length / PAGE_SIZE) || 1
+    const maxPrivatePages = Math.ceil(itineraries.filter(it => !it.is_public).length / PAGE_SIZE) || 1
+
+    if (publicPage > maxPublicPages) setPublicPage(maxPublicPages)
+    if (privatePage > maxPrivatePages) setPrivatePage(maxPrivatePages)
+  }, [itineraries.length, publicPage, privatePage])
+
+  // All trips by visibility
+  const allPublicTrips = itineraries.filter(it => it.is_public)
+  const allPrivateTrips = itineraries.filter(it => !it.is_public)
+
+  // Paginated trips
+  const publicTrips = allPublicTrips.slice(0, publicPage * PAGE_SIZE)
+  const privateTrips = allPrivateTrips.slice(0, privatePage * PAGE_SIZE)
+
+  // Has more to load
+  const hasMorePublic = allPublicTrips.length > publicTrips.length
+  const hasMorePrivate = allPrivateTrips.length > privateTrips.length
 
   const handleDelete = async (id: string) => {
     try {
@@ -169,13 +194,13 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Shared Adventures"
-            value={publicTrips.length}
+            value={allPublicTrips.length}
             icon={<Globe className="w-7 h-7" />}
             accentColor="secondary"
           />
           <StatCard
             label="Private Collection"
-            value={privateTrips.length}
+            value={allPrivateTrips.length}
             icon={<Lock className="w-7 h-7" />}
             accentColor="accent"
           />
@@ -185,7 +210,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8">
         {/* Public Trips Section */}
-        {publicTrips.length > 0 && (
+        {allPublicTrips.length > 0 && (
           <section className="mb-16 animate-reveal-up stagger-4">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -198,7 +223,7 @@ export default function DashboardPage() {
                   </h2>
                 </div>
                 <p className="text-neutral-600 font-body ml-13">
-                  {publicTrips.length} {publicTrips.length === 1 ? 'trip' : 'trips'} shared with the world
+                  {allPublicTrips.length} {allPublicTrips.length === 1 ? 'trip' : 'trips'} shared with the world
                 </p>
               </div>
             </div>
@@ -224,11 +249,26 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+
+            {/* Load More - Public */}
+            {hasMorePublic && (
+              <div className="mt-8 text-center">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setPublicPage(p => p + 1)}
+                  className="font-heading font-bold"
+                >
+                  <ChevronDown className="w-5 h-5 mr-2" />
+                  Load More ({allPublicTrips.length - publicTrips.length} remaining)
+                </Button>
+              </div>
+            )}
           </section>
         )}
 
         {/* Private Trips Section */}
-        {privateTrips.length > 0 && (
+        {allPrivateTrips.length > 0 && (
           <section className="mb-16 animate-reveal-up stagger-5">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -241,7 +281,7 @@ export default function DashboardPage() {
                   </h2>
                 </div>
                 <p className="text-neutral-600 font-body ml-13">
-                  {privateTrips.length} private {privateTrips.length === 1 ? 'trip' : 'trips'} & drafts
+                  {allPrivateTrips.length} private {allPrivateTrips.length === 1 ? 'trip' : 'trips'} & drafts
                 </p>
               </div>
             </div>
@@ -267,6 +307,21 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+
+            {/* Load More - Private */}
+            {hasMorePrivate && (
+              <div className="mt-8 text-center">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setPrivatePage(p => p + 1)}
+                  className="font-heading font-bold"
+                >
+                  <ChevronDown className="w-5 h-5 mr-2" />
+                  Load More ({allPrivateTrips.length - privateTrips.length} remaining)
+                </Button>
+              </div>
+            )}
           </section>
         )}
 

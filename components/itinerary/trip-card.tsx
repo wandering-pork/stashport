@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { ItineraryWithDays } from '@/lib/types/models'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagPill } from '@/components/ui/tag-pill'
-import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2, DollarSign } from 'lucide-react'
+import { ShareModal } from './share-modal'
+import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2, DollarSign, Share2 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface TripCardProps {
@@ -22,6 +24,7 @@ export function TripCard({
   onCopyLink,
   onDelete,
 }: TripCardProps) {
+  const [showShareModal, setShowShareModal] = useState(false)
   const totalActivities = trip.days.reduce((acc, day) => acc + day.activities.length, 0)
   const dayCount = trip.days.length
 
@@ -169,6 +172,18 @@ export function TripCard({
               <Link2 className="w-4 h-4 text-secondary-600" />
             </button>
             <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowShareModal(true)
+              }}
+              className="p-2 hover:bg-accent-50 rounded-lg transition-colors"
+              title="Share as image"
+              aria-label="Share trip as image"
+            >
+              <Share2 className="w-4 h-4 text-accent-600" />
+            </button>
+            <button
               onClick={onDelete}
               className="p-2 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete trip"
@@ -179,6 +194,11 @@ export function TripCard({
           </div>
         </div>
       </div>
+      <ShareModal
+        itinerary={trip}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </Card>
   )
 }

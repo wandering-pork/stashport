@@ -61,6 +61,8 @@ export type Database = {
           is_public: boolean
           stashed_from_id: string | null
           budget_level: number | null
+          type: 'daily' | 'guide'
+          cover_photo_url: string | null
           created_at: string
           updated_at: string
         }
@@ -74,6 +76,8 @@ export type Database = {
           is_public?: boolean
           stashed_from_id?: string | null
           budget_level?: number | null
+          type?: 'daily' | 'guide'
+          cover_photo_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -87,6 +91,8 @@ export type Database = {
           is_public?: boolean
           stashed_from_id?: string | null
           budget_level?: number | null
+          type?: 'daily' | 'guide'
+          cover_photo_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -214,6 +220,79 @@ export type Database = {
             columns: ["itinerary_id"]
             isOneToOne: false
             referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      categories: {
+        Row: {
+          id: string
+          itinerary_id: string
+          name: string
+          icon: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          itinerary_id: string
+          name: string
+          icon?: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          itinerary_id?: string
+          name?: string
+          icon?: string
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      category_items: {
+        Row: {
+          id: string
+          category_id: string
+          title: string
+          location: string | null
+          notes: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          title: string
+          location?: string | null
+          notes?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          title?: string
+          location?: string | null
+          notes?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           }
         ]

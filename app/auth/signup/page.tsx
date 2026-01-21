@@ -62,7 +62,8 @@ export default function SignupPage() {
         }
       }
 
-      router.push('/dashboard')
+      // Redirect to confirmation page with email
+      router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}`)
     } catch (err) {
       setError('An error occurred. Please try again.')
       console.error('Signup error:', err)

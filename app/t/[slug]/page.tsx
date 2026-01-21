@@ -3,10 +3,12 @@
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { TagPill } from '@/components/ui/tag-pill'
+import { ShareModal } from '@/components/itinerary/share-modal'
 import { ItineraryWithDays } from '@/lib/types/models'
-import { MapPin, Calendar, Clock, Plane, Loader2 } from 'lucide-react'
+import { MapPin, Calendar, Clock, Plane, Loader2, Share2 } from 'lucide-react'
 
 export default function PublicTripPage() {
   const params = useParams()
@@ -15,6 +17,7 @@ export default function PublicTripPage() {
   const [trip, setTrip] = useState<ItineraryWithDays | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   useEffect(() => {
     if (!slug) return
@@ -91,7 +94,7 @@ export default function PublicTripPage() {
       {/* Header */}
       <div className="bg-white border-b border-neutral-200">
         <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="flex items-start gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-neutral-900 mb-2">
                 {trip.title}
@@ -131,6 +134,16 @@ export default function PublicTripPage() {
                 <p className="text-neutral-600 max-w-2xl">{trip.description}</p>
               )}
             </div>
+
+            {/* Share Button */}
+            <Button
+              variant="primary"
+              onClick={() => setShowShareModal(true)}
+              className="gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Share
+            </Button>
           </div>
         </div>
       </div>
@@ -231,6 +244,13 @@ export default function PublicTripPage() {
           </Card>
         )}
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        itinerary={trip}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
   )
 }

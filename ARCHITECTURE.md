@@ -1,7 +1,7 @@
 # Stashport Technical Architecture
 
-**Version:** 0.6.0
-**Last Updated:** January 20, 2026
+**Version:** 0.7.0
+**Last Updated:** January 21, 2026
 **Status:** Production Ready
 
 ---
@@ -79,6 +79,10 @@ app/
 │   │   ├── route.ts         # GET/POST /api/itineraries
 │   │   ├── [id]/route.ts    # GET/PUT/DELETE /api/itineraries/[id]
 │   │   └── public/route.ts  # Public trip API
+│   ├── upload/
+│   │   └── cover/route.ts   # Sprint 3: Cover photo upload
+│   ├── share/
+│   │   └── generate/route.ts # Sprint 3: Image generation
 │   └── auth/
 │       └── ... (auth endpoints)
 └── globals.css              # Global styles + design system
@@ -91,13 +95,18 @@ components/
 ├── itinerary/
 │   ├── itinerary-form.tsx   # Create/edit form
 │   ├── day-cards.tsx        # Draggable day cards
-│   └── trip-card.tsx        # Trip display card
+│   ├── trip-card.tsx        # Trip display card
+│   ├── type-selector.tsx    # Sprint 3: Trip type selector
+│   ├── cover-upload.tsx     # Sprint 3: Cover photo upload
+│   ├── share-modal.tsx      # Sprint 3: Share as image modal
+│   └── template-preview.tsx # Sprint 3: Template preview component
 ├── ui/
 │   ├── button.tsx           # Button component
 │   ├── input.tsx            # Input component
 │   ├── textarea.tsx         # Textarea component
 │   ├── card.tsx             # Card component
 │   ├── toggle.tsx           # Toggle switch
+│   ├── dialog.tsx           # Dialog/modal component
 │   ├── country-select.tsx   # Country dropdown
 │   ├── save-status.tsx      # Autosave status indicator
 │   ├── avatar.tsx           # User avatar with initials
@@ -112,19 +121,21 @@ lib/
 │   ├── auth-context.tsx     # useAuth() hook
 │   └── auth-utils.ts        # Helper functions
 ├── constants/
-│   └── tags.ts              # TRIP_TAGS, BUDGET_LEVELS
+│   ├── tags.ts              # TRIP_TAGS, BUDGET_LEVELS
+│   └── templates.ts         # Sprint 3: Template styles, formats
 ├── hooks/
 │   └── use-autosave.ts      # Debounced autosave hook
 ├── supabase/
 │   ├── client.ts            # Client-side Supabase
-│   └── server.ts            # Server-side Supabase
+│   ├── server.ts            # Server-side Supabase
+│   └── database.types.ts    # Supabase auto-generated types
 ├── types/
-│   ├── models.ts            # TypeScript interfaces
-│   └── database.ts          # Supabase auto-generated types
+│   └── models.ts            # TypeScript interfaces
 ├── utils/
 │   ├── validation.ts        # Zod schemas
 │   ├── cn.ts                # Class name utility
-│   └── helpers.ts           # Utility functions
+│   ├── helpers.ts           # Utility functions
+│   └── image-generator.ts   # Sprint 3: Puppeteer image generation
 └── theme/
     └── tokens.ts            # Design tokens (optional)
 ```
@@ -171,9 +182,9 @@ Dashboard Page (Smart)
 
 #### Itineraries
 - `GET /api/itineraries` - Fetch all user's trips
-- `POST /api/itineraries` - Create new trip
+- `POST /api/itineraries` - Create new trip (includes type, cover_photo_url)
 - `GET /api/itineraries/[id]` - Get single trip
-- `PUT /api/itineraries/[id]` - Update trip
+- `PUT /api/itineraries/[id]` - Update trip (includes type, cover_photo_url)
 - `DELETE /api/itineraries/[id]` - Delete trip
 
 #### Public Itineraries
@@ -182,6 +193,10 @@ Dashboard Page (Smart)
 #### User Profile
 - `GET /api/users/profile` - Get current user's profile
 - `PUT /api/users/profile` - Update display name
+
+#### Upload & Sharing (Sprint 3)
+- `POST /api/upload/cover` - Upload cover photo to Supabase Storage (max 5MB, JPG/PNG/WebP)
+- `POST /api/share/generate` - Generate shareable image (Puppeteer + Chromium, PNG output)
 
 #### Authentication
 - `POST /auth/signup` - Register with email
@@ -287,6 +302,8 @@ CREATE TABLE itineraries (
   is_public BOOLEAN DEFAULT false,
   slug TEXT UNIQUE,
   budget_level INTEGER CHECK (budget_level >= 1 AND budget_level <= 4),  -- Sprint 2
+  type VARCHAR(10) DEFAULT 'daily',                    -- Sprint 3: 'daily' or 'guide'
+  cover_photo_url TEXT,                                -- Sprint 3: Cover photo URL
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -324,6 +341,27 @@ CREATE TABLE trip_tags (
   UNIQUE(itinerary_id, tag)
 );
 -- Tags: Adventure, Romantic, Budget, Luxury, Family, Solo, Food Tour, Road Trip
+
+-- Categories table (Sprint 3: Guide-type itineraries)
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  itinerary_id UUID REFERENCES itineraries(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  icon VARCHAR(50),
+  sort_order INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Category items table (Sprint 3: Items within guide categories)
+CREATE TABLE category_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  location TEXT,
+  notes TEXT,
+  sort_order INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 **Row Level Security (RLS) Policies:**
@@ -354,8 +392,17 @@ Users (1)
   ├─ (1:many) ─┬─ Itineraries
                   ├─ (1:many) ─┬─ Days
                   │              ├─ (1:many) ─┬─ Activities
-                  └─ (1:many) ─┬─ TripTags
+                  ├─ (1:many) ─┬─ TripTags
+                  └─ (1:many) ─┬─ Categories (Sprint 3)
+                                 ├─ (1:many) ─┬─ CategoryItems (Sprint 3)
 ```
+
+**Supabase Storage (Sprint 3):**
+- **Bucket:** `itinerary-covers`
+- **Public:** Yes
+- **File size limit:** 5MB
+- **Allowed MIME types:** image/jpeg, image/png, image/webp
+- **Path structure:** `{user_id}/{nanoid}.{ext}`
 
 ---
 
@@ -443,6 +490,41 @@ Users (1)
    - Click Edit → go to edit page
    - Click Delete → confirm and delete
    - Click Create New Trip → go to /itinerary/new
+```
+
+### Sharing as Image (Sprint 3)
+
+```
+1. User clicks Share button
+   - On TripCard or public trip page
+   - ShareModal opens with template selection
+
+2. User selects template style
+   - Clean: Cream background, elegant typography
+   - Bold: Full-bleed photo with text overlay
+   - Minimal: Simple, centered design
+
+3. User selects format
+   - Story: 1080x1920 (9:16) for Instagram/TikTok Stories
+   - Square: 1080x1080 (1:1) for Instagram/Facebook posts
+   - Portrait: 1080x1350 (4:5) for Instagram portrait posts
+
+4. Preview renders in real-time
+   - TemplatePreview shows scaled version
+   - Updates when style/format changes
+   - Uses trip data (title, destination, stats)
+
+5. User clicks "Download Image"
+   - POST to /api/share/generate
+   - Backend builds HTML template
+   - Puppeteer launches headless Chrome
+   - Captures screenshot at 2x scale (high DPI)
+   - Returns PNG as buffer
+
+6. Frontend downloads image
+   - Creates blob URL from buffer
+   - Triggers download with filename
+   - Image ready to share on social media
 ```
 
 ---
@@ -655,6 +737,60 @@ if (!validation.success) {
 }
 ```
 
+### 5. Server-Side Image Generation (Sprint 3)
+
+**Technology:** Puppeteer + @sparticuz/chromium
+
+```typescript
+// lib/utils/image-generator.ts
+import puppeteer from 'puppeteer-core'
+import chromium from '@sparticuz/chromium'
+
+export async function generateImage(options: GenerateImageOptions): Promise<Buffer> {
+  const { html, format } = options
+  const formatConfig = TEMPLATE_FORMATS[format]
+
+  // Launch serverless-compatible Chrome
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: {
+      width: formatConfig.width,
+      height: formatConfig.height,
+    },
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  })
+
+  const page = await browser.newPage()
+
+  // Set high DPI for quality
+  await page.setViewport({
+    width: formatConfig.width,
+    height: formatConfig.height,
+    deviceScaleFactor: 2,
+  })
+
+  // Load template HTML
+  await page.setContent(html, { waitUntil: 'networkidle0' })
+
+  // Capture screenshot
+  const screenshot = await page.screenshot({
+    type: 'png',
+    encoding: 'binary',
+  })
+
+  await browser.close()
+  return screenshot as Buffer
+}
+```
+
+**Template System:**
+- HTML templates with Tailwind CDN
+- Google Fonts for typography (Playfair Display, Space Grotesk, Source Sans Pro)
+- Three styles: clean, bold, minimal
+- Three formats: story (9:16), square (1:1), portrait (4:5)
+- Renders trip data: title, destination, day count, activity count, branding
+
 ---
 
 ## Design System
@@ -838,5 +974,5 @@ Custom domain (Phase 4)
 
 ---
 
-**Stashport Architecture - v0.6.0**
-*Well-documented, scalable, and maintainable.*
+**Stashport Architecture - v0.7.0**
+*Well-documented, scalable, and maintainable. Now with social sharing.*

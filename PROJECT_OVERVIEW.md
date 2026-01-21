@@ -10,7 +10,11 @@ Stashport is a **modern travel itinerary planning and sharing platform** where u
 
 ## Current Status: 🚧 In Development
 
-The application has completed a comprehensive 4-phase design system foundation and component implementation. The UI/UX framework is in place with professional design tokens, accessibility compliance, and performance optimization, but additional user experience refinements and feature development are in progress.
+**Sprints 1-2:** ✅ Complete
+**Sprint 3:** 🚧 In Progress (29% - 5 of 17 tasks complete)
+**Last Updated:** January 21, 2026
+
+The application has completed Sprint 1 (foundation features) and Sprint 2 (discovery & identity). Sprint 3 (visual templates & social sharing) is currently in progress with TypeSelector and CoverUpload components completed. The UI/UX framework is production-ready with professional design tokens, WCAG AA accessibility compliance, and performance optimization.
 
 ---
 
@@ -174,6 +178,98 @@ The application has completed a comprehensive 4-phase design system foundation a
 
 ---
 
+### **Sprint 2: Discovery & Identity ✅**
+*Social discovery and creator identity features*
+
+#### Trip Tags System
+- 8 predefined tags: Adventure, Romantic, Budget, Luxury, Family, Solo, Food Tour, Road Trip
+- TagSelector component with max 3 tag selection
+- TagPill component for display
+- Database table with unique constraint
+
+#### Budget Levels
+- 4-tier system: $ (Budget), $$ (Moderate), $$$ (Upscale), $$$$ (Luxury)
+- BudgetSelector component with toggle behavior
+- Visual representation with dollar signs
+
+#### Creator Identity
+- User profile with display name
+- Avatar with color-coded initials
+- Creator attribution on public trips
+- Public trip view shows creator info
+
+**Files Created/Modified:**
+- `components/ui/tag-selector.tsx` - Multi-select tag picker
+- `components/ui/tag-pill.tsx` - Tag display component
+- `components/ui/budget-selector.tsx` - Budget level selector
+- `components/ui/avatar.tsx` - User avatar with initials
+- `lib/constants/tags.ts` - Tag constants and budget levels
+- Database: Added trip_tags table, budget_level column, user profile fields
+
+---
+
+### **Sprint 3: Visual Templates 🚧**
+*Social sharing with beautiful generated images - 29% Complete (5/17 tasks)*
+
+#### Completed (Phase 1)
+✅ **Database & Types Foundation**
+- Added `type` and `cover_photo_url` columns to itineraries table
+- Created categories and category_items tables with RLS
+- Updated TypeScript types and database types
+- Created template constants (styles, formats, colors)
+
+✅ **TypeSelector Component**
+- Trip type selection UI (daily vs guide)
+- Daily type: Traditional day-by-day itineraries ("Plan My Trip")
+- Guide type: Category-based favorites ("Share My Favorites")
+- Card-based selection with icons and descriptions
+- Full accessibility with keyboard support
+
+✅ **CoverUpload Component**
+- Drag-and-drop file upload interface
+- Supabase Storage integration (itinerary-covers bucket)
+- Client-side validation (JPG/PNG/WebP, max 5MB)
+- Image preview with remove functionality
+- WCAG 2.1 AA accessible with ARIA labels and keyboard navigation
+
+✅ **Infrastructure**
+- Supabase Storage bucket created with RLS policies
+- Dependencies installed (html2canvas, puppeteer-core, @sparticuz/chromium)
+- Build verified to pass with new types
+
+#### In Progress (Phases 2-5)
+🚧 **Remaining Components**
+- ShareModal with template and format selection (pending)
+- TemplatePreview for live preview rendering (pending)
+
+🚧 **Backend & Integration**
+- Cover photo upload API endpoint (pending)
+- Image generation API with Puppeteer (pending)
+- Form integration for type selector and cover upload (pending)
+- Share buttons on trip cards and public pages (pending)
+
+#### Known Issues (Sprint 3 Backlog)
+🐛 **BUG-001** (Critical): Cover photo not displaying after upload
+🔧 **UX-001** (High): Tag selector 3-tag limit not communicated
+🎯 **FEATURE-001** (High): Guide type incorrectly shows daily structure
+⚙️ **TECH-001** (Medium): Missing API logging in most routes
+⚡ **PERF-001** (Medium): Dashboard API slow (~1s response time)
+
+**Files Created So Far:**
+- `components/itinerary/type-selector.tsx` - Trip type selection ✅
+- `components/itinerary/cover-upload.tsx` - Cover photo upload ✅
+- `lib/constants/templates.ts` - Template definitions ✅
+- Database: type, cover_photo_url columns, categories/category_items tables ✅
+
+**Dependencies Added:**
+- `html2canvas` - Client-side preview rendering
+- `@sparticuz/chromium` - Serverless-compatible Chromium
+- `puppeteer-core` - Headless Chrome automation
+
+**Reference:** See `docs/SPRINT3-BACKLOG.md` and `docs/HANDOVER-2026-01-21-SPRINT3-PROGRESS.md` for details
+
+---
+
 ## 🎨 Design System
 
 ### Typography
@@ -259,7 +355,25 @@ The application has completed a comprehensive 4-phase design system foundation a
 - Public/private trip toggle
 - Shareable links for public trips
 - Copy-to-clipboard functionality
-- Social media integration ready
+- **Sprint 3:** Visual template sharing with image generation
+- **Sprint 3:** 3 template styles × 3 formats = 9 sharing options
+- **Sprint 3:** High-quality PNG export for social media
+
+### Discovery & Identity (Sprint 2)
+- Trip tagging system (8 predefined tags, max 3 per trip)
+- Budget level indicator (4 tiers: $-$$$$)
+- Creator profiles with display names
+- User avatars with color-coded initials
+- Public trip attribution
+
+### Visual Templates (Sprint 3)
+- Trip type selection (daily vs guide)
+- Cover photo upload with drag-and-drop
+- Share modal with real-time preview
+- Template styles: Clean, Bold, Minimal
+- Format options: Story, Square, Portrait
+- Server-side image generation with Puppeteer
+- Download as PNG for social sharing
 
 ### Responsive Design
 - Mobile-first approach

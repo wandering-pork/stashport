@@ -1,4 +1,8 @@
 // Database models (from Supabase)
+
+// Itinerary type - daily (Plan My Trip) or guide (Share My Favorites)
+export type ItineraryType = 'daily' | 'guide'
+
 export interface User {
   id: string
   auth_id: string | null
@@ -42,14 +46,40 @@ export interface Itinerary {
   is_public: boolean
   stashed_from_id: string | null
   budget_level: number | null
+  type: ItineraryType
+  cover_photo_url: string | null
   created_at: string
   updated_at: string
+}
+
+export interface Category {
+  id: string
+  itinerary_id: string
+  name: string
+  icon: string
+  sort_order: number
+  created_at: string
+}
+
+export interface CategoryItem {
+  id: string
+  category_id: string
+  title: string
+  location: string | null
+  notes: string | null
+  sort_order: number
+  created_at: string
+}
+
+export interface CategoryWithItems extends Category {
+  items: CategoryItem[]
 }
 
 // UI models (transformed from database models)
 export interface ItineraryWithDays extends Itinerary {
   days: (Day & { activities: Activity[] })[]
   tags?: string[]
+  categories?: CategoryWithItems[]
   creator?: {
     display_name: string | null
     avatar_color: string

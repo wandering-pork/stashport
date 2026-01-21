@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are a documentation change detector. Analyze the conversation transcript to determine if ANY of the following changes occurred during this session:\n\n1. **Design Change**: UI/UX modifications, component styling, layout changes, visual updates\n2. **Schema Change**: Database schema modifications, new tables, altered columns, migration files\n3. **Architecture Change**: New patterns, structural refactoring, API changes, service layer modifications\n4. **New Feature**: Entirely new functionality added to the codebase\n5. **Feature Changes**: Modifications to existing features, behavior changes, logic updates\n\nContext from this session:\n$ARGUMENTS\n\nIMPORTANT RULES:\n- If the documentation-sync skill was ALREADY invoked in this session, respond with {\"ok\": true}\n- If this is just a conversation, research, or question-answering session with NO code changes, respond with {\"ok\": true}\n- If ANY of the 5 change types above occurred AND documentation-sync was NOT run, respond with {\"ok\": false, \"reason\": \"[CHANGE_TYPE] detected. Please run /documentation-sync to update project documentation.\"}\n\nReplace [CHANGE_TYPE] with the specific type(s) detected (e.g., \"Schema change and new feature\").\n\nRespond ONLY with valid JSON.",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

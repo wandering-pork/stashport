@@ -112,6 +112,8 @@ export async function PUT(
         destination: itineraryValidation.data.destination || null,
         is_public: itineraryValidation.data.isPublic,
         budget_level: itineraryValidation.data.budgetLevel || null,
+        type: body.type,
+        cover_photo_url: body.cover_photo_url,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
