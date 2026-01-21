@@ -54,7 +54,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npx kill-port:*)",
       "Bash(git log:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(git push)"
     ]
   },
   "statusLine": {

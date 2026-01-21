@@ -34,15 +34,30 @@ export function TripCard({
       className="group overflow-hidden"
       onClick={onView}
     >
-      {/* Gradient Header */}
-      <div
-        className={cn(
-          'h-32 relative overflow-hidden',
-          trip.is_public
-            ? 'bg-gradient-to-br from-primary-400 to-secondary-400'
-            : 'bg-gradient-to-br from-neutral-300 to-neutral-400'
+      {/* Cover Photo / Gradient Header */}
+      <div className="h-32 relative overflow-hidden">
+        {trip.cover_photo_url ? (
+          <>
+            {/* Cover Photo */}
+            <img
+              src={trip.cover_photo_url}
+              alt={`${trip.title} cover`}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* Overlay for better badge visibility */}
+            <div className="absolute inset-0 bg-black/10" />
+          </>
+        ) : (
+          /* Gradient Background */
+          <div
+            className={cn(
+              'absolute inset-0',
+              trip.is_public
+                ? 'bg-gradient-to-br from-primary-400 to-secondary-400'
+                : 'bg-gradient-to-br from-neutral-300 to-neutral-400'
+            )}
+          />
         )}
-      >
         {/* Destination Badge */}
         {trip.destination && (
           <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-sm">

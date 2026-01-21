@@ -10,6 +10,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    console.log('[API] GET /api/itineraries/[id] - Request received:', { id })
+
     const supabase = await createServerClient()
 
     const { data: itinerary, error } = await supabase
@@ -27,15 +29,22 @@ export async function GET(
       .single()
 
     if (error || !itinerary) {
+      console.error('[API] GET /api/itineraries/[id] - Not found:', { id, error })
       return NextResponse.json(
         { error: 'Itinerary not found' },
         { status: 404 }
       )
     }
 
+    console.log('[API] GET /api/itineraries/[id] - Success:', {
+      id: itinerary.id,
+      slug: itinerary.slug,
+      daysCount: itinerary.days?.length || 0
+    })
+
     return NextResponse.json(itinerary)
   } catch (err) {
-    console.error('Unexpected error:', err)
+    console.error('[API] GET /api/itineraries/[id] - Unexpected error:', err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -50,6 +59,8 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    console.log('[API] PUT /api/itineraries/[id] - Request received:', { id })
+
     const supabase = await createServerClient()
 
     // Get current user
@@ -59,6 +70,7 @@ export async function PUT(
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
+      console.error('[API] PUT /api/itineraries/[id] - Unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -77,6 +89,7 @@ export async function PUT(
     }
 
     if (existingItinerary.user_id !== user.id) {
+      console.error('[API] PUT /api/itineraries/[id] - Forbidden:', { id, userId: user.id })
       return NextResponse.json(
         { error: 'Forbidden - you do not own this itinerary' },
         { status: 403 }
@@ -85,6 +98,16 @@ export async function PUT(
 
     const body = await request.json()
     const { title, description, destination, isPublic, days, tags, budgetLevel } = body
+
+    console.log('[API] PUT /api/itineraries/[id] - Payload:', {
+      id,
+      title,
+      daysCount: days?.length || 0,
+      tagsCount: tags?.length || 0,
+      type: body.type,
+      hasCoverPhoto: !!body.cover_photo_url,
+      userId: user.id
+    })
 
     // Validate itinerary data
     const itineraryValidation = itinerarySchema.safeParse({
@@ -287,9 +310,14 @@ export async function PUT(
       tags: updatedTags?.map(t => t.tag) || [],
     }
 
+    console.log('[API] PUT /api/itineraries/[id] - Success:', {
+      id: response.id,
+      daysUpdated: response.days?.length || 0
+    })
+
     return NextResponse.json(response)
   } catch (err: any) {
-    console.error('Unexpected error:', err)
+    console.error('[API] PUT /api/itineraries/[id] - Unexpected error:', err)
     return NextResponse.json(
       { error: err.message || 'Internal server error' },
       { status: 500 }
@@ -304,6 +332,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    console.log('[API] DELETE /api/itineraries/[id] - Request received:', { id })
+
     const supabase = await createServerClient()
 
     // Get current user
@@ -313,6 +343,7 @@ export async function DELETE(
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
+      console.error('[API] DELETE /api/itineraries/[id] - Unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -331,6 +362,7 @@ export async function DELETE(
     }
 
     if (existingItinerary.user_id !== user.id) {
+      console.error('[API] DELETE /api/itineraries/[id] - Forbidden:', { id, userId: user.id })
       return NextResponse.json(
         { error: 'Forbidden - you do not own this itinerary' },
         { status: 403 }
@@ -344,16 +376,18 @@ export async function DELETE(
       .eq('id', id)
 
     if (deleteError) {
-      console.error('Delete error:', deleteError)
+      console.error('[API] DELETE /api/itineraries/[id] - Delete error:', deleteError)
       return NextResponse.json(
         { error: 'Failed to delete itinerary' },
         { status: 500 }
       )
     }
 
+    console.log('[API] DELETE /api/itineraries/[id] - Success:', { id })
+
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('Unexpected error:', err)
+    console.error('[API] DELETE /api/itineraries/[id] - Unexpected error:', err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -6,6 +6,8 @@ import { randomUUID } from 'crypto'
 
 // GET - Fetch all itineraries for the current user
 export async function GET(request: NextRequest) {
+  console.log('[API] GET /api/itineraries - Request received')
+
   try {
     const supabase = await createServerClient()
 
@@ -16,8 +18,11 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
+      console.error('[API] GET /api/itineraries - Unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('[API] GET /api/itineraries - Fetching for user:', { userId: user.id })
 
     // Fetch user's itineraries with nested days and activities
     const { data: itineraries, error } = await supabase
@@ -35,12 +40,16 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('[API] GET /api/itineraries - Database error:', error)
       return NextResponse.json(
         { error: 'Failed to fetch itineraries' },
         { status: 500 }
       )
     }
+
+    console.log('[API] GET /api/itineraries - Fetched itineraries:', {
+      count: itineraries?.length || 0
+    })
 
     // Fetch tags for all itineraries
     const itineraryIds = itineraries?.map(i => i.id) || []
@@ -67,9 +76,13 @@ export async function GET(request: NextRequest) {
       tags: tagsMap[itinerary.id] || [],
     }))
 
+    console.log('[API] GET /api/itineraries - Success:', {
+      totalItineraries: itinerariesWithTags?.length || 0
+    })
+
     return NextResponse.json(itinerariesWithTags)
   } catch (err) {
-    console.error('Unexpected error:', err)
+    console.error('[API] GET /api/itineraries - Unexpected error:', err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -79,6 +92,8 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new itinerary
 export async function POST(request: NextRequest) {
+  console.log('[API] POST /api/itineraries - Request received')
+
   try {
     const supabase = await createServerClient()
 
@@ -89,6 +104,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
+      console.error('[API] POST /api/itineraries - Unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -110,6 +126,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { title, description, destination, isPublic, days, tags, budgetLevel } = body
 
+    console.log('[API] POST /api/itineraries - Payload:', {
+      title,
+      destination,
+      daysCount: days?.length || 0,
+      tagsCount: tags?.length || 0,
+      budgetLevel,
+      type: body.type || 'daily',
+      hasCoverPhoto: !!body.cover_photo_url,
+      userId: user.id
+    })
+
     // Validate itinerary data
     const itineraryValidation = itinerarySchema.safeParse({
       title,
@@ -121,6 +148,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!itineraryValidation.success) {
+      console.error('[API] POST /api/itineraries - Validation failed:', itineraryValidation.error.issues[0].message)
       return NextResponse.json(
         { error: itineraryValidation.error.issues[0].message },
         { status: 400 }
@@ -154,12 +182,17 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (itineraryError) {
-      console.error('Itinerary creation error:', itineraryError)
+      console.error('[API] POST /api/itineraries - Creation error:', itineraryError)
       return NextResponse.json(
         { error: 'Failed to create itinerary' },
         { status: 500 }
       )
     }
+
+    console.log('[API] POST /api/itineraries - Created itinerary:', {
+      id: itinerary.id,
+      slug: itinerary.slug
+    })
 
     // Insert tags if provided
     const validatedTags = itineraryValidation.data.tags || []
@@ -300,9 +333,15 @@ export async function POST(request: NextRequest) {
       tags: insertedTags?.map(t => t.tag) || [],
     }
 
+    console.log('[API] POST /api/itineraries - Success:', {
+      id: response.id,
+      slug: response.slug,
+      daysCreated: response.days?.length || 0
+    })
+
     return NextResponse.json(response, { status: 201 })
   } catch (err: any) {
-    console.error('Unexpected error:', err)
+    console.error('[API] POST /api/itineraries - Unexpected error:', err)
     return NextResponse.json(
       { error: err.message || 'Internal server error' },
       { status: 500 }
