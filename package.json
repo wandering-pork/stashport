@@ -2,6 +2,9 @@
   "name": "stashport",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -20,6 +23,7 @@
     "lucide-react": "^0.562.0",
     "nanoid": "^5.1.6",
     "next": "16.1.1",
+    "puppeteer-core": "^24.35.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "use-debounce": "^10.1.0",
@@ -32,7 +36,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
-    "puppeteer-core": "^24.35.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
