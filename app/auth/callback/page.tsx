@@ -78,8 +78,29 @@ function AuthCallbackContent() {
       if (code) {
         try {
           console.log('[Auth Callback] Exchanging code for session...')
-          // Exchange code for session - client-side has access to PKCE verifier
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+          // Exchange code with timeout to prevent hanging
+          const exchangePromise = supabase.auth.exchangeCodeForSession(code)
+          const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
+            setTimeout(() => resolve({ data: null, error: new Error('timeout') }), 8000)
+          )
+
+          const { data, error: exchangeError } = await Promise.race([exchangePromise, timeoutPromise])
+
+          // If timed out, check if we're actually authenticated anyway
+          if (exchangeError?.message === 'timeout') {
+            console.log('[Auth Callback] Code exchange timed out, checking auth state...')
+            const { data: { user: currentUser } } = await supabase.auth.getUser()
+            if (currentUser) {
+              console.log('[Auth Callback] User authenticated despite timeout, redirecting...')
+              window.location.href = '/dashboard'
+              return
+            }
+            setError('Authentication timed out. Please try again.')
+            setIsProcessing(false)
+            return
+          }
+
           console.log('[Auth Callback] exchangeCodeForSession returned:', {
             hasUser: !!data?.user,
             userId: data?.user?.id,
@@ -99,35 +120,36 @@ function AuthCallbackContent() {
             return
           }
 
-          // Create user profile record if needed
-          if (data.user && data.user.email) {
+          // Create user profile record if needed (fire and forget - don't block redirect)
+          if (data?.user && data.user.email) {
             console.log('[Auth Callback] Creating/updating user profile...')
-            try {
-              const { error: upsertError } = await supabase
-                .from('users')
-                .upsert({
-                  id: data.user.id,
-                  auth_id: data.user.id,
-                  email: data.user.email,
-                }, {
-                  onConflict: 'id',
-                  ignoreDuplicates: true
-                })
+            // Wrap in async IIFE to handle errors without blocking
+            ;(async () => {
+              try {
+                const { error: upsertError } = await supabase
+                  .from('users')
+                  .upsert({
+                    id: data.user.id,
+                    auth_id: data.user.id,
+                    email: data.user.email!,
+                  }, {
+                    onConflict: 'id',
+                    ignoreDuplicates: true
+                  })
 
-              if (upsertError && !upsertError.message.includes('duplicate')) {
-                console.error('[Auth Callback] Error creating user profile:', upsertError)
-              } else {
-                console.log('[Auth Callback] User profile ready')
+                if (upsertError && !upsertError.message.includes('duplicate')) {
+                  console.error('[Auth Callback] Error creating user profile:', upsertError)
+                } else {
+                  console.log('[Auth Callback] User profile ready')
+                }
+              } catch (profileErr) {
+                console.error('[Auth Callback] Profile upsert exception:', profileErr)
               }
-            } catch (profileErr) {
-              console.error('[Auth Callback] Profile upsert exception:', profileErr)
-              // User record might already exist, which is fine
-            }
+            })()
           }
 
           // Success - redirect to dashboard
           console.log('[Auth Callback] Code exchange successful, redirecting to dashboard...')
-          // Use window.location.href as a more reliable redirect
           window.location.href = '/dashboard'
           return
         } catch (err) {
