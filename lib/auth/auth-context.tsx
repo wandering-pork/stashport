@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Memoize supabase client to prevent recreation on every render
   const supabase = useMemo(() => createClient(), [])
 
-  // Fetch user profile from our users table
-  const fetchProfile = useCallback(async (userId: string) => {
+  // Fetch user profile from our users table, create if doesn't exist
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -40,6 +40,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (error) {
+        // PGRST116 means no rows found - create the profile
+        if (error.code === 'PGRST116' && userEmail) {
+          console.log('[Auth] Profile not found, creating new profile...')
+          const { data: newProfile, error: createError } = await supabase
+            .from('users')
+            .insert({
+              id: userId,
+              auth_id: userId,
+              email: userEmail,
+            })
+            .select('id, email, display_name, avatar_color')
+            .single()
+
+          if (createError) {
+            console.error('[Auth] Error creating profile:', createError)
+            return null
+          }
+          console.log('[Auth] Profile created successfully')
+          return newProfile as UserProfile
+        }
         console.error('[Auth] Error fetching profile:', error)
         return null
       }
@@ -53,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Refresh profile (can be called after profile updates)
   const refreshProfile = useCallback(async () => {
     if (user) {
-      const profileData = await fetchProfile(user.id)
+      const profileData = await fetchProfile(user.id, user.email || undefined)
       setProfile(profileData)
     }
   }, [user, fetchProfile])
@@ -70,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Fetch profile if user exists
         if (currentUser) {
-          const profileData = await fetchProfile(currentUser.id)
+          const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
           setProfile(profileData)
         }
       } catch (error) {
@@ -92,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Fetch profile on auth change
       if (currentUser) {
-        const profileData = await fetchProfile(currentUser.id)
+        const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
         setProfile(profileData)
       } else {
         setProfile(null)
