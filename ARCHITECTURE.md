@@ -1,8 +1,22 @@
 # Stashport Technical Architecture
 
-**Version:** 0.9.0
-**Last Updated:** January 25, 2026
-**Status:** Production Ready (Sprint 4 - Dashboard Redesign In Progress)
+**Version:** 1.0.0
+**Last Updated:** January 26, 2026
+**Status:** Production (Live at https://stashport.app)
+
+---
+
+## Deployment
+
+| Environment | URL | Platform |
+|-------------|-----|----------|
+| Production | https://stashport.app | Vercel |
+| Database | ap-south-1 | Supabase |
+
+**Environment Variables (Vercel):**
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` - Supabase anon key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
 
 ---
 
@@ -53,6 +67,7 @@ Stashport is a full-stack travel itinerary management application built with mod
 
 **Directory Structure:**
 ```
+middleware.ts                # Supabase auth session refresh
 app/
 ├── page.tsx                 # Home/landing page
 ├── layout.tsx               # Root layout
@@ -72,8 +87,10 @@ app/
 ├── auth/
 │   ├── login/page.tsx       # Login page
 │   ├── signup/page.tsx      # Signup page
-│   ├── confirm-email/page.tsx # Email confirmation page
-│   ├── callback/route.ts    # OAuth callback
+│   ├── forgot-password/page.tsx # Password reset request
+│   ├── reset-password/page.tsx  # Password reset form
+│   ├── confirm-email/page.tsx   # Email confirmation page
+│   ├── callback/page.tsx    # OAuth callback
 │   └── logout/route.ts      # Sign out
 ├── t/
 │   └── [slug]/page.tsx      # Public trip view
@@ -81,6 +98,7 @@ app/
 │   ├── itineraries/
 │   │   ├── route.ts         # GET/POST /api/itineraries
 │   │   ├── [id]/route.ts    # GET/PUT/DELETE /api/itineraries/[id]
+│   │   ├── explore/route.ts # Public itineraries discovery
 │   │   └── public/route.ts  # Public trip API
 │   ├── upload/
 │   │   └── cover/route.ts   # Sprint 3: Cover photo upload

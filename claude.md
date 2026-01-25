@@ -6,11 +6,19 @@
 npm run dev      # Dev server at localhost:3000
 npm run build    # Production build + TypeScript check
 npm run lint     # ESLint
+vercel --prod    # Deploy to production
 ```
+
+## Production
+
+- **URL:** https://stashport.app
+- **Hosting:** Vercel
+- **Database:** Supabase (ap-south-1)
 
 ## Project Structure
 
 ```
+middleware.ts  # Supabase auth session refresh (required for SSR)
 app/           # Next.js App Router pages
   auth/        # Login, signup, callback, confirm-email
   dashboard/   # Main dashboard (with pagination)
@@ -114,6 +122,42 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error('Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+```
+
+### Middleware (Auth Session Refresh)
+
+The `middleware.ts` file handles Supabase auth token refresh on every request. This is required for server-side rendering to work with authenticated users.
+
+```tsx
+// middleware.ts - handles auth cookie refresh
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+  // Creates Supabase client with cookie handling
+  // Refreshes auth token if needed
+  // Required for SSR authentication
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+}
+```
+
+### Auth Context (Auto Profile Creation)
+
+The `AuthContext` automatically creates user profiles for OAuth users if they don't exist:
+
+```tsx
+// When fetchProfile returns PGRST116 (no rows), creates profile automatically
+const fetchProfile = async (userId: string, userEmail?: string) => {
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single()
+
+  if (error?.code === 'PGRST116' && userEmail) {
+    // Auto-create profile for OAuth users
+    await supabase.from('users').insert({ id: userId, auth_id: userId, email: userEmail })
   }
 }
 ```
