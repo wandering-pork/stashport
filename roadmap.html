@@ -355,12 +355,14 @@
     <header>
       <h1>Stashport Roadmap</h1>
       <p>MVP-focused development plan</p>
-      <div class="status-badge">Sprints 1-3 ✅ Complete | Sprint 4 📋 Ready to Start</div>
+      <div class="status-badge">Sprints 1-3.5 ✅ Complete | Sprint 4 🚧 In Progress (Dashboard Redesign)</div>
     </header>
 
     <!-- What Changed Notice -->
     <div class="change-note">
-      <strong>✅ Sprint 3 Complete (Jan 22, 2026):</strong> Visual Templates feature fully implemented with bug fixes! Users can now upload cover photos, select trip types (daily/guide), and generate shareable images in 3 styles × 3 formats. Fixed critical bugs: cover photo display, tag limit UX, and API logging. Ready to start Sprint 4: Onboarding & Engagement.
+      <strong>🎨 Sunlit Voyage Theme (Jan 25, 2026):</strong> Complete redesign of landing, login, and signup pages with new "Sunlit Voyage" warm editorial theme. Features terracotta (#e07a5f), sage green (#6b7b5f), and warm sand backgrounds. New CSS utilities: .shadow-terra, .text-gradient-terra, .bg-brand-panel, .feature-card.
+      <br><br>
+      <strong>🚧 Sprint 4 In Progress:</strong> Dashboard redesign from tab-based to unified magazine layout. See <a href="./docs/CURRENT-SPRINT.md">Current Sprint Plan</a>.
     </div>
 
     <!-- Progress Overview -->
@@ -377,7 +379,7 @@
         <div class="legend-item"><div class="legend-dot" style="background: var(--teal)"></div> Foundation Complete</div>
         <div class="legend-item"><div class="legend-dot" style="background: var(--coral)"></div> Sprint 1 Complete (~5-7h)</div>
         <div class="legend-item"><div class="legend-dot" style="background: var(--golden)"></div> Sprint 2 Complete (~8-10h)</div>
-        <div class="legend-item"><div class="legend-dot" style="background: var(--purple)"></div> Sprint 3 Complete (~14-17h)</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--purple)"></div> Sprint 3 + 3.5 Complete (~16-19h)</div>
         <div class="legend-item"><div class="legend-dot" style="background: var(--neutral-400)"></div> Sprint 4 + Post-MVP</div>
       </div>
     </div>
@@ -489,35 +491,122 @@
               <span class="priority-badge p0">P0</span>
               <span class="effort-badge">2h ✓</span>
             </div>
+            <div class="feature-item">
+              <span class="feature-name">Dedicated share page (editorial studio UX)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">3h ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprint 3.5 -->
+        <div class="sprint-card sprint-3">
+          <div class="sprint-header">
+            <h3>Sprint 3.5: Polish & Sharing ✅</h3>
+            <span class="sprint-hours">~2h</span>
+          </div>
+          <div class="sprint-body">
+            <div class="feature-item">
+              <span class="feature-name">Web Share API integration</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">1h ✓</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Keyboard shortcuts (share page)</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge">30m ✓</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Toast notifications (copy link)</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge">30m ✓</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Trip countdown badges</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge">45m ✓</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Help tooltips & personalization</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge">1.5h ✓</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">File size display & preferences</span>
+              <span class="priority-badge p3">P3</span>
+              <span class="effort-badge">30m ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprint 3.5 Extension -->
+        <div class="sprint-card sprint-3">
+          <div class="sprint-header">
+            <h3>Sprint 3.5 Extension: UI/UX Overhaul ✅</h3>
+            <span class="sprint-hours">~16-20h</span>
+          </div>
+          <div class="sprint-body">
+            <div class="sprint-progress">✅ All Phases Complete</div>
+            <div class="feature-item">
+              <span class="feature-name">Public itineraries explore section</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge completed">✓ 4h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Guide type interface (sections vs days)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge completed">✓ 5h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Public trip view redesign (hero)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge completed">✓ 3-4h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Day cards contrast improvements</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge completed">✓ 1h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Form text + share page cleanup</span>
+              <span class="priority-badge p2">P2</span>
+              <span class="effort-badge completed">✓ 1h</span>
+            </div>
           </div>
         </div>
 
         <!-- Sprint 4 -->
-        <div class="sprint-card sprint-4">
+        <div class="sprint-card sprint-4 in-progress">
           <div class="sprint-header">
-            <h3>Sprint 4: Onboarding & Engagement</h3>
-            <span class="sprint-hours">~14-17h</span>
+            <h3>Sprint 4: Dashboard Redesign 🚧</h3>
+            <span class="sprint-hours">~8-12h</span>
           </div>
           <div class="sprint-body">
+            <div class="sprint-progress active">🚧 In Progress</div>
             <div class="feature-item">
-              <span class="feature-name">Guided onboarding flow</span>
+              <span class="feature-name">Hero section with wave background</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">1-2h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Upcoming Trips section (smart hybrid)</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">2-3h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Suggested for You (personalized)</span>
               <span class="priority-badge p1">P1</span>
               <span class="effort-badge">3-4h</span>
             </div>
             <div class="feature-item">
-              <span class="feature-name">Featured itineraries discovery</span>
-              <span class="priority-badge p1">P1</span>
-              <span class="effort-badge">4-5h</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-name">Stash/Save functionality</span>
-              <span class="priority-badge p1">P1</span>
-              <span class="effort-badge">3-4h</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-name">Social caption generator</span>
+              <span class="feature-name">My Favorites sidebar (placeholder)</span>
               <span class="priority-badge p2">P2</span>
-              <span class="effort-badge">4-5h</span>
+              <span class="effort-badge">1h</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-name">Remove tab system, responsive layout</span>
+              <span class="priority-badge p1">P1</span>
+              <span class="effort-badge">1-2h</span>
             </div>
           </div>
         </div>
@@ -530,16 +619,6 @@
       <p style="margin-bottom: 1rem; color: var(--neutral-600);">Outstanding issues to address in future sprints</p>
 
       <div class="backlog-grid">
-        <div class="backlog-item high">
-          <div class="backlog-header">
-            <span class="backlog-title">Guide Type Shows Daily Structure</span>
-            <span class="backlog-id">FEATURE-001</span>
-          </div>
-          <div class="backlog-desc">
-            "Share My Favorites" (guide) currently shows day-based structure. Should show category-based sections instead. Deferred to Sprint 4.
-          </div>
-        </div>
-
         <div class="backlog-item medium">
           <div class="backlog-header">
             <span class="backlog-title">Dashboard API Performance (~1s)</span>
@@ -551,7 +630,7 @@
         </div>
       </div>
 
-      <p style="margin-top: 1rem; color: var(--teal); font-weight: 600;">✅ Resolved in Sprint 3: BUG-001 (Cover photo display), UX-001 (Tag limit UX), TECH-001 (API logging)</p>
+      <p style="margin-top: 1rem; color: var(--teal); font-weight: 600;">✅ Resolved: BUG-001 (Cover photo), UX-001 (Tags), TECH-001 (Logging), UX-002 (Share page), UX-003 (Daily/guide forms), FEATURE-001 (Guide type UI with SectionCards)</p>
     </div>
 
     <!-- Post-MVP -->
@@ -626,14 +705,17 @@
         <span class="tech-badge">Zod</span>
         <span class="tech-badge">@dnd-kit</span>
         <span class="tech-badge">use-debounce</span>
-        <span class="tech-badge new">html2canvas</span>
-        <span class="tech-badge new">puppeteer-core</span>
-        <span class="tech-badge new">@sparticuz/chromium</span>
+        <span class="tech-badge">html2canvas</span>
+        <span class="tech-badge">puppeteer-core</span>
+        <span class="tech-badge">@sparticuz/chromium</span>
+        <span class="tech-badge new">sonner</span>
+        <span class="tech-badge new">@radix-ui/react-tooltip</span>
+        <span class="tech-badge new">date-fns</span>
       </div>
     </div>
 
     <footer>
-      <p>Last Updated: January 22, 2026 | <a href="./docs/SPRINT3-COMPLETE.md">Sprint 3 Summary</a> | <a href="./docs/SPRINT3-BACKLOG.md">View Backlog</a></p>
+      <p>Last Updated: January 25, 2026 | <a href="./docs/CURRENT-SPRINT.md">Current Sprint Plan</a> | <a href="./PROJECT_OVERVIEW.md">Project Overview</a> | <a href="./ARCHITECTURE.md">Architecture</a></p>
     </footer>
   </div>
 </body>

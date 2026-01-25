@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validation'
+import { itinerarySchema, daySchema, activitySchema, categorySchema, categoryItemSchema } from '@/lib/utils/validation'
 import { generateSlug } from '@/lib/utils/slug'
 import { randomUUID } from 'crypto'
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     console.log('[API] GET /api/itineraries - Fetching for user:', { userId: user.id })
 
-    // Fetch user's itineraries with nested days and activities
+    // Fetch user's itineraries with nested days, activities, and categories
     const { data: itineraries, error } = await supabase
       .from('itineraries')
       .select(
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
         days(
           *,
           activities(*)
+        ),
+        categories(
+          *,
+          category_items(*)
         )
       `
       )
@@ -70,11 +74,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Merge tags into itineraries
-    const itinerariesWithTags = itineraries?.map(itinerary => ({
-      ...itinerary,
-      tags: tagsMap[itinerary.id] || [],
-    }))
+    // Merge tags into itineraries and sort categories
+    const itinerariesWithTags = itineraries?.map(itinerary => {
+      // Sort categories and their items by sort_order
+      const sortedCategories = (itinerary as any).categories
+        ?.sort((a: any, b: any) => a.sort_order - b.sort_order)
+        .map((cat: any) => ({
+          ...cat,
+          items: cat.category_items?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
+        })) || []
+
+      return {
+        ...itinerary,
+        tags: tagsMap[itinerary.id] || [],
+        categories: sortedCategories,
+      }
+    })
 
     console.log('[API] GET /api/itineraries - Success:', {
       totalItineraries: itinerariesWithTags?.length || 0
@@ -214,95 +229,185 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create days if provided
-    if (days && Array.isArray(days) && days.length > 0) {
-      const daysToInsert = days.map((day: any, index: number) => {
-        // Validate day data
-        const dayValidation = daySchema.safeParse({
-          dayNumber: day.dayNumber || index + 1,
-          date: day.date,
-          title: day.title,
-        })
+    // Handle content based on itinerary type
+    const itineraryType = body.type || 'daily'
 
-        if (!dayValidation.success) {
-          throw new Error(`Invalid day data: ${dayValidation.error.issues[0].message}`)
-        }
+    if (itineraryType === 'guide') {
+      // Guide type: Create categories and category items
+      const sections = body.sections || body.categories || []
 
-        return {
-          id: randomUUID(),
-          itinerary_id: itinerary.id,
-          day_number: dayValidation.data.dayNumber,
-          date: dayValidation.data.date || null,
-          title: dayValidation.data.title || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      })
+      if (sections && Array.isArray(sections) && sections.length > 0) {
+        const categoriesToInsert = sections.map((section: any, index: number) => {
+          const categoryValidation = categorySchema.safeParse({
+            name: section.name || section.title,
+            icon: section.icon || '📍',
+            sortOrder: section.sortOrder ?? index,
+          })
 
-      const { data: insertedDays, error: daysError } = await supabase
-        .from('days')
-        .insert(daysToInsert)
-        .select()
+          if (!categoryValidation.success) {
+            throw new Error(`Invalid section data: ${categoryValidation.error.issues[0].message}`)
+          }
 
-      if (daysError) {
-        console.error('Days creation error:', daysError)
-        // Continue anyway - itinerary was created
-      }
-
-      // Create activities if provided
-      if (insertedDays) {
-        const activitiesToInsert: any[] = []
-
-        days.forEach((day: any, dayIndex: number) => {
-          if (day.activities && Array.isArray(day.activities)) {
-            day.activities.forEach((activity: any) => {
-              // Validate activity data
-              const activityValidation = activitySchema.safeParse({
-                title: activity.title,
-                location: activity.location,
-                startTime: activity.startTime,
-                endTime: activity.endTime,
-                notes: activity.notes,
-              })
-
-              if (!activityValidation.success) {
-                throw new Error(
-                  `Invalid activity data: ${activityValidation.error.issues[0].message}`
-                )
-              }
-
-              const dayId = insertedDays[dayIndex]?.id
-              if (dayId) {
-                activitiesToInsert.push({
-                  id: randomUUID(),
-                  day_id: dayId,
-                  title: activityValidation.data.title,
-                  location: activityValidation.data.location || null,
-                  start_time: activityValidation.data.startTime || null,
-                  end_time: activityValidation.data.endTime || null,
-                  notes: activityValidation.data.notes || null,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                })
-              }
-            })
+          return {
+            id: randomUUID(),
+            itinerary_id: itinerary.id,
+            name: categoryValidation.data.name,
+            icon: categoryValidation.data.icon,
+            sort_order: categoryValidation.data.sortOrder,
+            created_at: new Date().toISOString(),
           }
         })
 
-        if (activitiesToInsert.length > 0) {
-          const { error: activitiesError } = await supabase
-            .from('activities')
-            .insert(activitiesToInsert)
+        const { data: insertedCategories, error: categoriesError } = await supabase
+          .from('categories')
+          .insert(categoriesToInsert)
+          .select()
 
-          if (activitiesError) {
-            console.error('Activities creation error:', activitiesError)
-            // Continue anyway - itinerary and days were created
+        if (categoriesError) {
+          console.error('Categories creation error:', categoriesError)
+          // Continue anyway - itinerary was created
+        }
+
+        // Create category items if provided
+        if (insertedCategories) {
+          const itemsToInsert: any[] = []
+
+          sections.forEach((section: any, sectionIndex: number) => {
+            const items = section.items || []
+            if (items && Array.isArray(items)) {
+              items.forEach((item: any, itemIndex: number) => {
+                const itemValidation = categoryItemSchema.safeParse({
+                  title: item.title,
+                  location: item.location,
+                  notes: item.notes,
+                  sortOrder: item.sortOrder ?? itemIndex,
+                })
+
+                if (!itemValidation.success) {
+                  throw new Error(
+                    `Invalid item data: ${itemValidation.error.issues[0].message}`
+                  )
+                }
+
+                const categoryId = insertedCategories[sectionIndex]?.id
+                if (categoryId) {
+                  itemsToInsert.push({
+                    id: randomUUID(),
+                    category_id: categoryId,
+                    title: itemValidation.data.title,
+                    location: itemValidation.data.location || null,
+                    notes: itemValidation.data.notes || null,
+                    sort_order: itemValidation.data.sortOrder,
+                    created_at: new Date().toISOString(),
+                  })
+                }
+              })
+            }
+          })
+
+          if (itemsToInsert.length > 0) {
+            const { error: itemsError } = await supabase
+              .from('category_items')
+              .insert(itemsToInsert)
+
+            if (itemsError) {
+              console.error('Category items creation error:', itemsError)
+              // Continue anyway - itinerary and categories were created
+            }
+          }
+        }
+      }
+    } else {
+      // Daily type: Create days and activities
+      if (days && Array.isArray(days) && days.length > 0) {
+        const daysToInsert = days.map((day: any, index: number) => {
+          // Validate day data
+          const dayValidation = daySchema.safeParse({
+            dayNumber: day.dayNumber || index + 1,
+            date: day.date,
+            title: day.title,
+          })
+
+          if (!dayValidation.success) {
+            throw new Error(`Invalid day data: ${dayValidation.error.issues[0].message}`)
+          }
+
+          return {
+            id: randomUUID(),
+            itinerary_id: itinerary.id,
+            day_number: dayValidation.data.dayNumber,
+            date: dayValidation.data.date || null,
+            title: dayValidation.data.title || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        })
+
+        const { data: insertedDays, error: daysError } = await supabase
+          .from('days')
+          .insert(daysToInsert)
+          .select()
+
+        if (daysError) {
+          console.error('Days creation error:', daysError)
+          // Continue anyway - itinerary was created
+        }
+
+        // Create activities if provided
+        if (insertedDays) {
+          const activitiesToInsert: any[] = []
+
+          days.forEach((day: any, dayIndex: number) => {
+            if (day.activities && Array.isArray(day.activities)) {
+              day.activities.forEach((activity: any) => {
+                // Validate activity data
+                const activityValidation = activitySchema.safeParse({
+                  title: activity.title,
+                  location: activity.location,
+                  startTime: activity.startTime,
+                  endTime: activity.endTime,
+                  notes: activity.notes,
+                })
+
+                if (!activityValidation.success) {
+                  throw new Error(
+                    `Invalid activity data: ${activityValidation.error.issues[0].message}`
+                  )
+                }
+
+                const dayId = insertedDays[dayIndex]?.id
+                if (dayId) {
+                  activitiesToInsert.push({
+                    id: randomUUID(),
+                    day_id: dayId,
+                    title: activityValidation.data.title,
+                    location: activityValidation.data.location || null,
+                    start_time: activityValidation.data.startTime || null,
+                    end_time: activityValidation.data.endTime || null,
+                    notes: activityValidation.data.notes || null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                }
+              })
+            }
+          })
+
+          if (activitiesToInsert.length > 0) {
+            const { error: activitiesError } = await supabase
+              .from('activities')
+              .insert(activitiesToInsert)
+
+            if (activitiesError) {
+              console.error('Activities creation error:', activitiesError)
+              // Continue anyway - itinerary and days were created
+            }
           }
         }
       }
     }
 
-    // Fetch the complete itinerary with days and activities
+    // Fetch the complete itinerary with related data
     const { data: completeItinerary, error: fetchError } = await supabase
       .from('itineraries')
       .select(
@@ -311,6 +416,10 @@ export async function POST(request: NextRequest) {
         days(
           *,
           activities(*)
+        ),
+        categories(
+          *,
+          category_items(*)
         )
       `
       )
@@ -328,9 +437,18 @@ export async function POST(request: NextRequest) {
       .select('tag')
       .eq('itinerary_id', itinerary.id)
 
+    // Sort categories and their items by sort_order
+    const sortedCategories = completeItinerary.categories
+      ?.sort((a: any, b: any) => a.sort_order - b.sort_order)
+      .map((cat: any) => ({
+        ...cat,
+        items: cat.category_items?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
+      })) || []
+
     const response = {
       ...completeItinerary,
       tags: insertedTags?.map(t => t.tag) || [],
+      categories: sortedCategories,
     }
 
     console.log('[API] POST /api/itineraries - Success:', {

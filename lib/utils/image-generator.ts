@@ -7,6 +7,51 @@ interface GenerateImageOptions {
   format: TemplateFormat
 }
 
+// Common Chrome paths for local development
+const LOCAL_CHROME_PATHS = {
+  win32: [
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    process.env.LOCALAPPDATA + '/Google/Chrome/Application/chrome.exe',
+  ],
+  darwin: [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ],
+  linux: [
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+  ],
+}
+
+async function getExecutablePath(): Promise<string> {
+  const isDev = process.env.NODE_ENV === 'development'
+
+  // Allow override via environment variable
+  if (process.env.CHROME_EXECUTABLE_PATH) {
+    console.log('[ImageGenerator] Using CHROME_EXECUTABLE_PATH:', process.env.CHROME_EXECUTABLE_PATH)
+    return process.env.CHROME_EXECUTABLE_PATH
+  }
+
+  if (isDev) {
+    // Try to find local Chrome for development
+    const platform = process.platform as keyof typeof LOCAL_CHROME_PATHS
+    const paths = LOCAL_CHROME_PATHS[platform] || []
+
+    const fs = await import('fs')
+    for (const chromePath of paths) {
+      if (chromePath && fs.existsSync(chromePath)) {
+        console.log('[ImageGenerator] Using local Chrome:', chromePath)
+        return chromePath
+      }
+    }
+
+    console.warn('[ImageGenerator] No local Chrome found, trying @sparticuz/chromium')
+  }
+
+  // Fallback to serverless chromium (for production/Vercel)
+  return await chromium.executablePath()
+}
+
 export async function generateImage(options: GenerateImageOptions): Promise<Buffer> {
   const { html, format } = options
   const formatConfig = TEMPLATE_FORMATS[format]
@@ -14,19 +59,23 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
   console.log('[ImageGenerator] Starting image generation:', {
     format,
     dimensions: `${formatConfig.width}x${formatConfig.height}`,
+    env: process.env.NODE_ENV,
   })
 
   let browser
 
   try {
-    // Launch browser (serverless-compatible)
+    const executablePath = await getExecutablePath()
+    const isDev = process.env.NODE_ENV === 'development'
+
+    // Launch browser
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: isDev ? ['--no-sandbox', '--disable-setuid-sandbox'] : chromium.args,
       defaultViewport: {
         width: formatConfig.width,
         height: formatConfig.height,
       },
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: true,
     })
 

@@ -1,8 +1,8 @@
 # Stashport Technical Architecture
 
-**Version:** 0.7.0
-**Last Updated:** January 21, 2026
-**Status:** Production Ready
+**Version:** 0.9.0
+**Last Updated:** January 25, 2026
+**Status:** Production Ready (Sprint 4 - Dashboard Redesign In Progress)
 
 ---
 
@@ -61,8 +61,11 @@ app/
 ├── itinerary/
 │   ├── new/page.tsx         # Create trip form
 │   ├── [id]/
-│   │   ├── page.tsx         # View trip details
+│   │   ├── page.tsx         # View trip details (redirect to edit)
 │   │   ├── edit/page.tsx    # Edit trip form
+│   │   ├── share/
+│   │   │   ├── page.tsx     # Share page (server component)
+│   │   │   └── share-page-client.tsx # Share page (client component)
 │   │   └── layout.tsx       # Trip layout
 │   └── api/
 │       └── ... (API routes)
@@ -98,8 +101,18 @@ components/
 │   ├── trip-card.tsx        # Trip display card
 │   ├── type-selector.tsx    # Sprint 3: Trip type selector
 │   ├── cover-upload.tsx     # Sprint 3: Cover photo upload
-│   ├── share-modal.tsx      # Sprint 3: Share as image modal
-│   └── template-preview.tsx # Sprint 3: Template preview component
+│   ├── share-modal.tsx      # Sprint 3: Legacy share modal (public trips only)
+│   ├── template-preview.tsx # Sprint 3: Template preview component
+│   ├── explore-card.tsx     # Sprint 3.5 Ext: Magazine-style card for explore section
+│   ├── explore-grid.tsx     # Sprint 3.5 Ext: Responsive grid with loading/empty states
+│   ├── section-cards.tsx    # Sprint 3.5 Ext: Section management for guide type
+│   ├── section-item.tsx     # Sprint 3.5 Ext: Individual item within a section
+│   └── add-section-modal.tsx # Sprint 3.5 Ext: Modal with 12 preset templates
+├── share/
+│   ├── template-selector.tsx # Sprint 3: Template style selector
+│   ├── format-selector.tsx   # Sprint 3: Format selector (story/square/portrait)
+│   ├── preview-panel.tsx     # Sprint 3: Large preview panel
+│   └── download-panel.tsx    # Sprint 3: Download panel with trip stats
 ├── ui/
 │   ├── button.tsx           # Button component
 │   ├── input.tsx            # Input component
@@ -122,7 +135,8 @@ lib/
 │   └── auth-utils.ts        # Helper functions
 ├── constants/
 │   ├── tags.ts              # TRIP_TAGS, BUDGET_LEVELS
-│   └── templates.ts         # Sprint 3: Template styles, formats
+│   ├── templates.ts         # Sprint 3: Template styles, formats
+│   └── section-presets.ts   # Sprint 3.5 Ext: Section presets for guide type
 ├── hooks/
 │   └── use-autosave.ts      # Debounced autosave hook
 ├── supabase/
@@ -189,6 +203,9 @@ Dashboard Page (Smart)
 
 #### Public Itineraries
 - `GET /api/itineraries/public/[slug]` - View public trip (includes creator info and tags)
+
+#### Explore (Sprint 3.5 Extension)
+- `GET /api/itineraries/explore` - Fetch public trips from other users (with pagination, filters)
 
 #### User Profile
 - `GET /api/users/profile` - Get current user's profile
@@ -384,6 +401,18 @@ CREATE POLICY "Users can delete own itineraries"
   USING (auth.uid() = user_id);
 
 -- Similar policies for days and activities
+
+-- Public creator profiles (added Jan 25, 2026)
+-- Allows anyone to view basic profile info for users with public itineraries
+CREATE POLICY "Anyone can view public creators" ON users
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.user_id = users.id
+      AND itineraries.is_public = true
+    )
+  );
 ```
 
 **Relationships:**
@@ -971,8 +1000,9 @@ Custom domain (Phase 4)
 - [ROADMAP.md](./ROADMAP.md) - Long-term vision and project status
 - [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - Phase implementation details
 - [BACKLOG.md](./BACKLOG.md) - MVP features and priorities
+- [docs/SPRINT-3.5-EXTENDED-PLAN.md](./docs/SPRINT-3.5-EXTENDED-PLAN.md) - Sprint 3.5 Extension UI/UX overhaul plan
 
 ---
 
-**Stashport Architecture - v0.7.0**
-*Well-documented, scalable, and maintainable. Now with social sharing.*
+**Stashport Architecture - v0.9.0**
+*Well-documented, scalable, and maintainable. Sprint 4 in progress with dashboard redesign.*

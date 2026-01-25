@@ -53,6 +53,22 @@ export const activitySchema = z.object({
   notes: optionalString(1000, 'Notes must be less than 1000 characters'),
 })
 
+// Category item schema for guide-type itineraries
+export const categoryItemSchema = z.object({
+  title: z.string().min(1, 'Item title is required').max(200, 'Item title must be less than 200 characters'),
+  location: optionalString(200, 'Location must be less than 200 characters'),
+  notes: optionalString(1000, 'Notes must be less than 1000 characters'),
+  sortOrder: z.number().min(0).optional().default(0),
+})
+
+// Category/section schema for guide-type itineraries
+export const categorySchema = z.object({
+  name: z.string().min(1, 'Section name is required').max(100, 'Section name must be less than 100 characters'),
+  icon: z.string().max(10, 'Icon must be an emoji or short string').optional().default('📍'),
+  sortOrder: z.number().min(0).optional().default(0),
+  items: z.array(categoryItemSchema).optional().default([]),
+})
+
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: passwordSchema,
@@ -62,6 +78,12 @@ export const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: passwordSchema,
   confirmPassword: z.string(),
+  displayName: z.string()
+    .min(2, 'Nickname must be at least 2 characters')
+    .max(50, 'Nickname must be less than 50 characters')
+    .regex(/^[a-zA-Z0-9_\s]+$/, 'Nickname can only contain letters, numbers, underscores, and spaces')
+    .optional()
+    .transform(val => val?.trim() || undefined),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -74,6 +96,8 @@ export const userProfileSchema = z.object({
 export type ItineraryInput = z.infer<typeof itinerarySchema>
 export type DayInput = z.infer<typeof daySchema>
 export type ActivityInput = z.infer<typeof activitySchema>
+export type CategoryItemInput = z.infer<typeof categoryItemSchema>
+export type CategoryInput = z.infer<typeof categorySchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type SignupInput = z.infer<typeof signupSchema>
 export type UserProfileInput = z.infer<typeof userProfileSchema>

@@ -66,20 +66,21 @@ function DaySection({
   const maxDuration = totalDays - day.dayNumber + 1
 
   return (
-    <div className={cn('relative', !isLast && 'pb-6')}>
-      {/* Timeline connector */}
+    <div className={cn('relative', !isLast && 'pb-8')}>
+      {/* Timeline connector - More visible with primary color */}
       {!isLast && (
-        <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-neutral-300 to-neutral-200" />
+        <div className="absolute left-[23px] top-14 bottom-0 w-1 bg-gradient-to-b from-primary-300 via-primary-200 to-transparent rounded-full" />
       )}
 
       {/* Day Header */}
       <div className="flex items-start gap-4">
-        {/* Day Number Circle */}
+        {/* Day Number Circle - Larger with gradient */}
         <div className="relative flex-shrink-0">
           <div className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center',
-            'bg-primary-500 text-white font-heading font-bold text-sm',
-            'shadow-md'
+            'w-12 h-12 rounded-2xl flex items-center justify-center',
+            'bg-gradient-to-br from-primary-500 to-primary-600',
+            'text-white font-heading font-bold text-lg',
+            'shadow-lg shadow-primary-500/25'
           )}>
             {day.dayNumber}
           </div>
@@ -91,15 +92,15 @@ function DaySection({
           <div className="flex items-center gap-3 mb-3">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               type="button"
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-neutral-400" />
+                <ChevronDown className="w-4 h-4 text-neutral-500" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-neutral-400" />
+                <ChevronRight className="w-4 h-4 text-neutral-500" />
               )}
-              <span className="text-sm font-heading font-bold text-neutral-500">
+              <span className="text-sm font-heading font-semibold text-neutral-700">
                 {formatDate(day.date)}
               </span>
             </button>
@@ -108,7 +109,7 @@ function DaySection({
 
             {/* Activity count badge */}
             {day.activities.length > 0 && (
-              <span className="text-xs px-2 py-0.5 bg-neutral-100 text-neutral-500 rounded-full font-heading">
+              <span className="text-xs px-2.5 py-1 bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-full font-heading font-medium">
                 {day.activities.length} {day.activities.length === 1 ? 'activity' : 'activities'}
               </span>
             )}
@@ -116,60 +117,62 @@ function DaySection({
 
           {/* Expandable Content */}
           {isExpanded && (
-            <div className="space-y-3 animate-fade-in">
-              {/* Day Title */}
-              <input
-                type="text"
-                value={day.title || ''}
-                onChange={(e) => onUpdateDayTitle(day.dayNumber, e.target.value)}
-                placeholder="Day theme (e.g., Beach Day, City Exploration)"
-                className={cn(
-                  'w-full px-0 py-2 bg-transparent',
-                  'text-lg font-display font-bold text-neutral-800',
-                  'placeholder:text-neutral-300 placeholder:font-normal',
-                  'border-b border-transparent hover:border-neutral-200 focus:border-primary-400',
-                  'transition-colors duration-200',
-                  'focus:outline-none'
-                )}
-              />
-
-              {/* Activities */}
-              <div className="space-y-2">
-                {day.activities.map((activity, idx) => (
-                  <ActivityItem
-                    key={idx}
-                    activity={activity}
-                    dayNumber={day.dayNumber}
-                    maxDuration={maxDuration}
-                    isEditing={editingActivity === idx}
-                    onStartEdit={() => setEditingActivity(idx)}
-                    onEndEdit={() => setEditingActivity(null)}
-                    onRemove={() => onRemoveActivity(day.dayNumber, idx)}
-                    onChange={(field, value) => onActivityChange?.(day.dayNumber, idx, field, value)}
-                  />
-                ))}
-
-                {/* Empty state */}
-                {day.activities.length === 0 && (
-                  <p className="text-sm text-neutral-400 italic py-2">
-                    No activities planned yet
-                  </p>
-                )}
-
-                {/* Add Activity Button */}
-                <button
-                  type="button"
-                  onClick={() => onAddActivity(day.dayNumber)}
+            <div className="space-y-4 animate-fade-in">
+              {/* Day Title - Inside a subtle card container */}
+              <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-sm">
+                <input
+                  type="text"
+                  value={day.title || ''}
+                  onChange={(e) => onUpdateDayTitle(day.dayNumber, e.target.value)}
+                  placeholder="Day theme (e.g., Beach Day, City Exploration)"
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 w-full',
-                    'text-sm text-neutral-500 hover:text-primary-600',
-                    'border border-dashed border-neutral-200 hover:border-primary-300 rounded-lg',
-                    'transition-all duration-200 hover:bg-primary-50/50'
+                    'w-full px-0 py-1 bg-transparent',
+                    'text-lg font-display font-bold text-neutral-900',
+                    'placeholder:text-neutral-400 placeholder:font-normal',
+                    'border-b-2 border-transparent hover:border-neutral-200 focus:border-primary-400',
+                    'transition-colors duration-200',
+                    'focus:outline-none'
                   )}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add activity</span>
-                </button>
+                />
+
+                {/* Activities */}
+                <div className="space-y-2 mt-4">
+                  {day.activities.map((activity, idx) => (
+                    <ActivityItem
+                      key={idx}
+                      activity={activity}
+                      dayNumber={day.dayNumber}
+                      maxDuration={maxDuration}
+                      isEditing={editingActivity === idx}
+                      onStartEdit={() => setEditingActivity(idx)}
+                      onEndEdit={() => setEditingActivity(null)}
+                      onRemove={() => onRemoveActivity(day.dayNumber, idx)}
+                      onChange={(field, value) => onActivityChange?.(day.dayNumber, idx, field, value)}
+                    />
+                  ))}
+
+                  {/* Empty state */}
+                  {day.activities.length === 0 && (
+                    <p className="text-sm text-neutral-500 italic py-2">
+                      No activities planned yet
+                    </p>
+                  )}
+
+                  {/* Add Activity Button */}
+                  <button
+                    type="button"
+                    onClick={() => onAddActivity(day.dayNumber)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2.5 w-full',
+                      'text-sm font-medium text-neutral-600 hover:text-primary-600',
+                      'border-2 border-dashed border-neutral-200 hover:border-primary-300 rounded-lg',
+                      'transition-all duration-200 hover:bg-primary-50/50'
+                    )}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add activity</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -204,7 +207,7 @@ function ActivityItem({
 
   if (isEditing) {
     return (
-      <div className="p-4 bg-white border border-primary-200 rounded-xl shadow-sm space-y-3 animate-scale-in">
+      <div className="p-4 bg-white border-2 border-primary-300 rounded-xl shadow-md space-y-3 animate-scale-in">
         {/* Activity Title */}
         <input
           type="text"
@@ -318,21 +321,21 @@ function ActivityItem({
         'group flex items-center gap-3 p-3 rounded-xl cursor-pointer',
         'border transition-all duration-200',
         isMultiDay
-          ? 'bg-gradient-to-r from-secondary-50 to-transparent border-secondary-200 hover:border-secondary-300 hover:shadow-sm'
-          : 'bg-neutral-50 hover:bg-white border-transparent hover:border-neutral-200 hover:shadow-sm'
+          ? 'bg-gradient-to-r from-secondary-50 to-white border-secondary-200 hover:border-secondary-400 hover:shadow-md'
+          : 'bg-neutral-50 hover:bg-white border border-neutral-100 hover:border-neutral-300 hover:shadow-md'
       )}
     >
       {/* Icon */}
       <div className={cn(
-        'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center',
+        'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center',
         isMultiDay
-          ? 'bg-secondary-100 border border-secondary-200'
-          : 'bg-white border border-neutral-200'
+          ? 'bg-secondary-100 border border-secondary-300'
+          : 'bg-white border border-neutral-200 shadow-sm'
       )}>
         {isMultiDay ? (
-          <Tent className="w-4 h-4 text-secondary-600" />
+          <Tent className="w-4 h-4 text-secondary-700" />
         ) : (
-          <MapPin className="w-4 h-4 text-primary-500" />
+          <MapPin className="w-4 h-4 text-primary-600" />
         )}
       </div>
 
@@ -341,7 +344,7 @@ function ActivityItem({
         <div className="flex items-center gap-2">
           <p className={cn(
             'text-sm font-heading font-bold truncate',
-            activity.title ? 'text-neutral-800' : 'text-neutral-400 italic'
+            activity.title ? 'text-neutral-900' : 'text-neutral-500 italic'
           )}>
             {activity.title || 'Untitled activity'}
           </p>
@@ -358,12 +361,12 @@ function ActivityItem({
         </div>
 
         {(activity.location || activity.startTime) && (
-          <div className="flex items-center gap-3 mt-0.5">
+          <div className="flex items-center gap-3 mt-1">
             {activity.location && (
-              <span className="text-xs text-neutral-500 truncate">{activity.location}</span>
+              <span className="text-xs text-neutral-600 truncate">{activity.location}</span>
             )}
             {activity.startTime && (
-              <span className="text-xs text-neutral-400 flex items-center gap-1">
+              <span className="text-xs text-neutral-500 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {activity.startTime}
               </span>
@@ -373,8 +376,8 @@ function ActivityItem({
       </div>
 
       {/* Edit hint */}
-      <span className="text-xs text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">
-        Click to edit
+      <span className="text-xs text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+        Edit
       </span>
     </div>
   )

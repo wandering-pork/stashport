@@ -9,6 +9,8 @@ import { CountrySelect } from '@/components/ui/country-select'
 import { Toggle } from '@/components/ui/toggle'
 import { DateRangeCalendar } from '@/components/ui/date-range-calendar'
 import { DayCards } from '@/components/itinerary/day-cards'
+import { SectionCards, Section } from '@/components/itinerary/section-cards'
+import { AddSectionModal } from '@/components/itinerary/add-section-modal'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { SaveStatusIndicator } from '@/components/ui/save-status'
 import { TagSelector } from '@/components/ui/tag-selector'
@@ -19,7 +21,8 @@ import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validati
 import { ItineraryWithDays, ItineraryType } from '@/lib/types/models'
 import { ItineraryTypeKey } from '@/lib/constants/templates'
 import { useAutosave } from '@/lib/hooks/use-autosave'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, HelpCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 interface ItineraryFormProps {
   initialData?: ItineraryWithDays
@@ -86,6 +89,28 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
 
   const [showDaysSection, setShowDaysSection] = useState(initialData ? true : false)
 
+  // Sections for guide type - initialize from initialData if available
+  const [sections, setSections] = useState<Section[]>(() => {
+    // If we have initialData with categories (guide type), use them
+    if (initialData?.categories && Array.isArray(initialData.categories)) {
+      return initialData.categories.map((cat: any, idx: number) => ({
+        name: cat.name || 'Untitled Section',
+        icon: cat.icon || '📍',
+        sortOrder: cat.sort_order ?? idx,
+        items: (cat.items || cat.category_items || []).map((item: any, itemIdx: number) => ({
+          title: item.title || '',
+          location: item.location || '',
+          notes: item.notes || '',
+          sortOrder: item.sort_order ?? itemIdx,
+        })),
+      }))
+    }
+    return []
+  })
+
+  // Show add section modal state
+  const [showAddSectionModal, setShowAddSectionModal] = useState(false)
+
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [draftRecovered, setDraftRecovered] = useState(false)
@@ -103,6 +128,7 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
     startDate: string
     endDate: string
     days: DayForm[]
+    sections: Section[]
     tags: string[]
     budgetLevel: number | null
     itineraryType: ItineraryTypeKey
@@ -123,11 +149,12 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
     startDate,
     endDate,
     days,
+    sections,
     tags,
     budgetLevel,
     itineraryType,
     coverPhotoUrl,
-  }), [title, description, destination, isPublic, startDate, endDate, days, tags, budgetLevel, itineraryType, coverPhotoUrl])
+  }), [title, description, destination, isPublic, startDate, endDate, days, sections, tags, budgetLevel, itineraryType, coverPhotoUrl])
 
   // Trigger autosave when form data changes
   useEffect(() => {
@@ -145,6 +172,12 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         if (draft.days && draft.days.length > 0) {
           setDays(draft.days)
         }
+        if (draft.sections && draft.sections.length > 0) {
+          setSections(draft.sections)
+        }
+        if (draft.itineraryType) {
+          setItineraryType(draft.itineraryType)
+        }
         setDraftRecovered(true)
         return
       }
@@ -152,16 +185,23 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
     setDraftRecovered(true)
 
     // Only autosave if there are actual changes
-    if (title || description || destination || days.length > 0) {
+    if (title || description || destination || days.length > 0 || sections.length > 0) {
       // Filter out incomplete activities to prevent validation errors during autosave
       const filteredDays = days.map(day => ({
         ...day,
         activities: day.activities.filter(activity => activity.title.trim() !== '')
       }))
 
+      // Filter out incomplete section items
+      const filteredSections = sections.map(section => ({
+        ...section,
+        items: section.items.filter(item => item.title.trim() !== '')
+      }))
+
       autosave.updateData({
         ...formData,
         days: filteredDays,
+        sections: filteredSections,
         tags,
         budgetLevel,
       })
@@ -436,6 +476,23 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         }
       })
 
+      // Prepare sections for guide type
+      const validatedSections = itineraryType === 'guide'
+        ? sections.map((section, idx) => ({
+            name: section.name,
+            icon: section.icon,
+            sortOrder: idx,
+            items: section.items
+              .filter(item => item.title.trim() !== '') // Only include items with titles
+              .map((item, itemIdx) => ({
+                title: item.title,
+                location: item.location || null,
+                notes: item.notes || null,
+                sortOrder: itemIdx,
+              })),
+          }))
+        : []
+
       // Prepare request payload
       const payload = {
         title: itineraryValidation.data.title,
@@ -446,7 +503,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         tags,
         type: itineraryType,
         cover_photo_url: coverPhotoUrl,
-        days: validatedDays,
+        // For daily type, send days; for guide type, send sections
+        ...(itineraryType === 'daily' ? { days: validatedDays } : { sections: validatedSections }),
       }
 
       // Make API request
@@ -495,6 +553,23 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
             }))
           )
         }
+
+        // Update sections for guide type
+        if (createdItinerary.categories) {
+          setSections(
+            createdItinerary.categories.map((cat: any, idx: number) => ({
+              name: cat.name || 'Untitled Section',
+              icon: cat.icon || '📍',
+              sortOrder: cat.sort_order ?? idx,
+              items: (cat.items || cat.category_items || []).map((item: any, itemIdx: number) => ({
+                title: item.title || '',
+                location: item.location || '',
+                notes: item.notes || '',
+                sortOrder: item.sort_order ?? itemIdx,
+              })),
+            }))
+          )
+        }
       }
 
       // Clear draft and navigate away when creating new trip
@@ -510,23 +585,13 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
   }
 
   return (
-    <form onSubmit={handleSubmit} className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface pb-32">
-      {/* Header Section */}
+    <TooltipProvider>
+      <form onSubmit={handleSubmit} className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface pb-32">
+        {/* Header Section - Clean and minimal */}
       <div className="max-w-4xl mx-auto px-4 pt-12 pb-8 animate-fade-in">
-        <div className="mb-2 inline-flex items-center gap-2 px-3 py-1 bg-primary-50 border border-primary-200 rounded-full">
-          <span className="text-xl">✈️</span>
-          <span className="text-xs font-heading font-bold uppercase text-primary-700">
-            {initialData ? 'Edit' : 'Create'} Adventure
-          </span>
-        </div>
-        <h1 className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-4">
-          {initialData ? 'Edit Your Adventure' : 'Create Your Adventure'}
+        <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900">
+          {initialData ? 'Edit Trip' : 'Create New Trip'}
         </h1>
-        <p className="text-lg text-neutral-600 font-body max-w-2xl">
-          {initialData
-            ? 'Update your trip details and refine your itinerary day by day'
-            : 'Plan every detail of your next journey and inspire other travelers'}
-        </p>
       </div>
 
       {/* Error State */}
@@ -541,21 +606,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
       )}
 
       <div className="max-w-4xl mx-auto px-4 overflow-visible">
-        {/* Consolidated Trip Details Card */}
+        {/* Trip Details Card - Clean, no redundant header */}
         <Card className="mb-8 border-t-4 border-t-primary-500 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          {/* Card Header */}
-          <CardHeader className="bg-gradient-to-r from-primary-50/80 to-transparent border-b border-primary-100 pb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-2xl">
-                ✈️
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold text-primary-900">Trip Details</h2>
-                <p className="text-sm text-primary-700">Tell us about your adventure</p>
-              </div>
-            </div>
-          </CardHeader>
-
           <CardContent className="pt-8 space-y-8">
             {/* Row 1: Title & Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -585,40 +637,44 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
             {/* Divider */}
             <div className="border-t border-neutral-200" />
 
-            {/* Row 2: Travel Dates */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Travel Dates
-              </label>
-              <DateRangeCalendar
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={(date) => {
-                  setStartDate(date)
-                  if (endDate) {
-                    generateDaysFromDates(date, endDate)
-                  }
-                }}
-                onEndDateChange={(date) => {
-                  setEndDate(date)
-                  if (startDate) {
-                    generateDaysFromDates(startDate, date)
-                  }
-                }}
-              />
+            {/* Row 2: Travel Dates (only for daily itineraries) */}
+            {itineraryType === 'daily' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Travel Dates
+                  </label>
+                  <DateRangeCalendar
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={(date) => {
+                      setStartDate(date)
+                      if (endDate) {
+                        generateDaysFromDates(date, endDate)
+                      }
+                    }}
+                    onEndDateChange={(date) => {
+                      setEndDate(date)
+                      if (startDate) {
+                        generateDaysFromDates(startDate, date)
+                      }
+                    }}
+                  />
 
-              {/* Duration Badge - Inline display when dates selected */}
-              {startDate && endDate && (
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-secondary-50 border border-secondary-200 rounded-full animate-scale-in">
-                  <span className="text-secondary-600 text-sm font-heading font-bold">
-                    {getDayCount()} {getDayCount() === 1 ? 'day' : 'days'}
-                  </span>
+                  {/* Duration Badge - Inline display when dates selected */}
+                  {startDate && endDate && (
+                    <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-secondary-50 border border-secondary-200 rounded-full animate-scale-in">
+                      <span className="text-secondary-600 text-sm font-heading font-bold">
+                        {getDayCount()} {getDayCount() === 1 ? 'day' : 'days'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Divider */}
-            <div className="border-t border-neutral-200" />
+                {/* Divider */}
+                <div className="border-t border-neutral-200" />
+              </>
+            )}
 
             {/* Row 3: Description */}
             <div>
@@ -678,8 +734,21 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
 
             {/* Budget Section */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
                 Budget Level (optional)
+                <Tooltip>
+                  <TooltipTrigger type="button">
+                    <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <div className="space-y-1">
+                      <p><strong>$</strong> = Budget-friendly</p>
+                      <p><strong>$$</strong> = Moderate spending</p>
+                      <p><strong>$$$</strong> = Upscale experiences</p>
+                      <p><strong>$$$$</strong> = Luxury travel</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </label>
               <BudgetSelector
                 value={budgetLevel}
@@ -703,8 +772,8 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
           </CardContent>
         </Card>
 
-        {/* Days and Activities Section - Timeline */}
-        {days.length > 0 && (
+        {/* Days Section - For Daily Type */}
+        {itineraryType === 'daily' && days.length > 0 && (
           <div className="animate-fade-in mb-12" style={{ animationDelay: '200ms' }}>
             {/* Section Header */}
             <div className="flex items-center gap-3 mb-6">
@@ -712,7 +781,9 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
                 📅
               </div>
               <div>
-                <h2 className="text-xl font-display font-bold text-neutral-900">Your Itinerary</h2>
+                <h2 className="text-xl font-display font-bold text-neutral-900">
+                  Your Itinerary
+                </h2>
                 <p className="text-sm text-neutral-500">
                   {days.length} {days.length === 1 ? 'day' : 'days'} planned
                 </p>
@@ -735,6 +806,88 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
             </div>
           </div>
         )}
+
+        {/* Sections - For Guide Type */}
+        {itineraryType === 'guide' && sections.length > 0 && (
+          <div className="animate-fade-in mb-12" style={{ animationDelay: '200ms' }}>
+            {/* Section Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-100 to-secondary-100 text-xl shadow-sm">
+                ❤️
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold text-neutral-900">
+                  Your Favorites
+                </h2>
+                <p className="text-sm text-neutral-500">
+                  {sections.length} {sections.length === 1 ? 'section' : 'sections'} with{' '}
+                  {sections.reduce((acc, s) => acc + s.items.length, 0)} places
+                </p>
+              </div>
+            </div>
+
+            {/* Sections */}
+            <div className="pl-1">
+              <SectionCards
+                sections={sections}
+                onSectionsChange={setSections}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Empty state for guide type when no sections exist */}
+        {itineraryType === 'guide' && sections.length === 0 && (
+          <div className="animate-fade-in mb-12" style={{ animationDelay: '200ms' }}>
+            <Card variant="default" className="border-2 border-dashed border-secondary-200 bg-gradient-to-br from-secondary-50/50 to-primary-50/30">
+              <CardContent padding="relaxed" className="text-center py-12">
+                <div className="mb-6">
+                  <div className="relative inline-block">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-secondary-100 to-primary-100 flex items-center justify-center mx-auto shadow-lg">
+                      <span className="text-4xl">❤️</span>
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-lg bg-accent-100 flex items-center justify-center shadow-md">
+                      <Plus className="w-4 h-4 text-accent-600" />
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-xl font-display font-bold text-neutral-900 mb-2">
+                  Start Adding Your Favorites
+                </h3>
+                <p className="text-neutral-600 mb-6 max-w-md mx-auto">
+                  Organize your favorite spots into sections like "Best Restaurants", "Hidden Gems", or "Must-See Attractions"
+                </p>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => setShowAddSectionModal(true)}
+                  className="gap-2 font-heading font-bold shadow-coral"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add First Section
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Add Section Modal for Guide Type */}
+        <AddSectionModal
+          open={showAddSectionModal}
+          onOpenChange={setShowAddSectionModal}
+          onAddSection={(newSection) => {
+            setSections([
+              ...sections,
+              {
+                name: newSection.name,
+                icon: newSection.icon,
+                sortOrder: sections.length,
+                items: [],
+              },
+            ])
+          }}
+          existingSectionNames={sections.map(s => s.name)}
+        />
       </div>
 
       {/* Sticky Footer with Actions */}
@@ -773,5 +926,6 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
         </div>
       </div>
     </form>
+    </TooltipProvider>
   )
 }

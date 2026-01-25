@@ -19,9 +19,11 @@ function AuthCallbackContent() {
       const errorParam = searchParams.get('error')
       const errorDescription = searchParams.get('error_description')
 
+      console.log('[Auth Callback] Starting callback processing', { code: !!code, tokenHash: !!tokenHash, type, errorParam })
+
       // Handle error from Supabase
       if (errorParam) {
-        console.error('Auth callback error:', errorParam, errorDescription)
+        console.error('[Auth Callback] Error from Supabase:', errorParam, errorDescription)
         setError(errorDescription || 'Authentication failed')
         setIsProcessing(false)
         return
@@ -61,7 +63,8 @@ function AuthCallbackContent() {
             }
           }
 
-          router.push('/dashboard')
+          console.log('[Auth Callback] Token verification successful, redirecting to dashboard...')
+          window.location.href = '/dashboard'
           return
         } catch (err) {
           console.error('Unexpected error during token verification:', err)
@@ -74,11 +77,18 @@ function AuthCallbackContent() {
       // Method 2: Code exchange (for OAuth and PKCE flow - requires same browser session)
       if (code) {
         try {
+          console.log('[Auth Callback] Exchanging code for session...')
           // Exchange code for session - client-side has access to PKCE verifier
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('[Auth Callback] exchangeCodeForSession returned:', {
+            hasUser: !!data?.user,
+            userId: data?.user?.id,
+            hasSession: !!data?.session,
+            error: exchangeError?.message
+          })
 
           if (exchangeError) {
-            console.error('Code exchange error:', exchangeError)
+            console.error('[Auth Callback] Code exchange error:', exchangeError)
             // Provide more helpful error message for PKCE issues
             if (exchangeError.message.includes('PKCE') || exchangeError.message.includes('code verifier')) {
               setError('Session expired. Please sign up again using the same browser.')
@@ -91,6 +101,7 @@ function AuthCallbackContent() {
 
           // Create user profile record if needed
           if (data.user && data.user.email) {
+            console.log('[Auth Callback] Creating/updating user profile...')
             try {
               const { error: upsertError } = await supabase
                 .from('users')
@@ -104,18 +115,23 @@ function AuthCallbackContent() {
                 })
 
               if (upsertError && !upsertError.message.includes('duplicate')) {
-                console.error('Error creating user profile:', upsertError)
+                console.error('[Auth Callback] Error creating user profile:', upsertError)
+              } else {
+                console.log('[Auth Callback] User profile ready')
               }
-            } catch {
+            } catch (profileErr) {
+              console.error('[Auth Callback] Profile upsert exception:', profileErr)
               // User record might already exist, which is fine
             }
           }
 
           // Success - redirect to dashboard
-          router.push('/dashboard')
+          console.log('[Auth Callback] Code exchange successful, redirecting to dashboard...')
+          // Use window.location.href as a more reliable redirect
+          window.location.href = '/dashboard'
           return
         } catch (err) {
-          console.error('Unexpected error during code exchange:', err)
+          console.error('[Auth Callback] Unexpected error during code exchange:', err)
           setError('An unexpected error occurred during authentication')
           setIsProcessing(false)
           return
@@ -123,9 +139,11 @@ function AuthCallbackContent() {
       }
 
       // No code parameter - check if we're already authenticated
+      console.log('[Auth Callback] No code/token_hash, checking existing session...')
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        router.push('/dashboard')
+        console.log('[Auth Callback] Already authenticated, redirecting to dashboard...')
+        window.location.href = '/dashboard'
         return
       }
 

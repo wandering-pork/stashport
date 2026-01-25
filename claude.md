@@ -15,19 +15,27 @@ app/           # Next.js App Router pages
   auth/        # Login, signup, callback, confirm-email
   dashboard/   # Main dashboard (with pagination)
   itinerary/   # Create/edit pages
+    [id]/
+      edit/    # Edit existing trip
+      share/   # Share page - full-page editorial studio experience
+    new/       # Create new trip
   t/[slug]/    # Public trip view
   api/         # API routes
 components/
-  ui/          # Button, Card, Input, SaveStatusIndicator, etc.
-  itinerary/   # Trip forms, cards
+  ui/          # Button, Card, Input, SaveStatusIndicator, Dialog, Tooltip, etc.
+  itinerary/   # Trip forms, cards, type selector, cover upload, explore, sections
+  share/       # Share page components (template/format selectors, preview, download)
   layout/      # Header, footer
 lib/
   supabase/    # Client/server Supabase setup
   auth/        # AuthContext, useAuth hook
   hooks/       # Custom hooks (useAutosave)
-  constants/   # Tags, budget levels
+  constants/   # Tags, budget levels, templates, section-presets
   types/       # TypeScript interfaces
-  utils/       # cn(), validation schemas
+  utils/       # cn(), validation schemas, share-helpers
+docs/          # Planning documents
+  share-page-plan.md          # Dedicated share page specification
+  SPRINT-3.5-EXTENDED-PLAN.md # Sprint 3.5 Extension UI/UX overhaul plan
 ```
 
 ## Code Patterns
@@ -194,8 +202,12 @@ import { ItineraryTypeKey } from '@/lib/constants/templates'
 />
 
 // Two types:
-// - 'daily': Plan My Trip (day-by-day itineraries)
-// - 'guide': Share My Favorites (category-based guides)
+// - 'daily': Plan My Trip (day-by-day itineraries with dates)
+// - 'guide': Share My Favorites (category-based guides without dates)
+
+// Form adapts based on type:
+// - 'daily': Shows travel dates section, timeline view, "days" terminology
+// - 'guide': Hides dates, shows section view, "sections" terminology, "Add Section" button
 ```
 
 ### CoverUpload
@@ -217,22 +229,102 @@ import { CoverUpload } from '@/components/itinerary/cover-upload'
 // - Preview with remove button
 ```
 
-### ShareModal
+### Dialog
+
+```tsx
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
+
+<Dialog open={isOpen} onOpenChange={setIsOpen} maxWidth="4xl">
+  <DialogHeader onClose={() => setIsOpen(false)}>
+    Modal Title
+  </DialogHeader>
+  <DialogContent>
+    {/* Modal content */}
+  </DialogContent>
+</Dialog>
+
+// maxWidth options: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
+// Default: 'md'
+```
+
+### Tooltip
+
+```tsx
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+
+// Wrap app/form in TooltipProvider
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger type="button">
+      <HelpCircle className="w-4 h-4 text-gray-400" />
+    </TooltipTrigger>
+    <TooltipContent side="right" className="max-w-xs">
+      <p>Helpful tooltip text here</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+
+// Props: side="top|right|bottom|left", sideOffset (default: 4)
+// Accessible, keyboard navigable, smooth animations
+```
+
+### Toast Notifications
+
+```tsx
+import { toast } from 'sonner'
+
+// Success toast
+toast.success('Link copied to clipboard!')
+
+// Error toast
+toast.error('Failed to copy link')
+
+// Info toast
+toast('Processing...')
+
+// Toaster component added to root layout
+// Position: bottom-right, richColors enabled
+```
+
+### Share Page (Dedicated Full-Page Experience)
+
+```tsx
+// Navigate to share page from trip cards
+router.push(`/itinerary/${tripId}/share`)
+
+// Route: /itinerary/[id]/share
+// Features:
+// - Editorial studio aesthetic with 3-column layout (desktop)
+// - Template selector (left): Clean, Bold, Minimal styles
+// - Preview panel (center): 60% scale real-time preview
+// - Format selector + download (right): Story (9:16), Square (1:1), Portrait (4:5)
+// - Compact, fits on single screen without scrolling
+// - Mobile-responsive stacked layout
+// - Smooth 300ms crossfade transitions between styles
+// - Downloads high-resolution PNG files
+
+// Components (in components/share/):
+// - TemplateSelector: Vertical cards with sparkle selection indicators
+// - FormatSelector: Aspect ratio visuals with teal selection states
+// - PreviewPanel: Large preview with decorative corner accents
+// - DownloadPanel: Trip stats and download button
+```
+
+### ShareModal (Legacy - Public Trips Only)
 
 ```tsx
 import { ShareModal } from '@/components/itinerary/share-modal'
 
+// Still used on public trip pages (/t/[slug]) for viewers who don't own the trip
+// For owned trips, use the dedicated share page instead
+
 const [showShareModal, setShowShareModal] = useState(false)
 
 <ShareModal
-  itinerary={itinerary}         // ItineraryWithDays
+  itinerary={itinerary}
   isOpen={showShareModal}
   onClose={() => setShowShareModal(false)}
 />
-
-// Template styles: clean, bold, minimal
-// Formats: story (9:16), square (1:1), portrait (4:5)
-// Downloads as PNG file
 ```
 
 ## Design Tokens
@@ -246,9 +338,9 @@ const [showShareModal, setShowShareModal] = useState(false)
 
 ### Typography
 
-- `font-display` (Playfair Display) - H1, H2, hero text
-- `font-heading` (Space Grotesk) - H3, H4, buttons, labels
-- `font-body` (Source Sans Pro) - Body text, paragraphs
+- `font-display` (Fira Sans) - H1, H2, hero text - humanist sans by Mozilla
+- `font-heading` (Fira Sans) - H3, H4, buttons, labels - humanist sans by Mozilla
+- `font-body` (Fira Sans) - Body text, paragraphs - clean and highly readable
 
 ### Animations
 
@@ -257,6 +349,19 @@ className="animate-fade-in"      // 250ms fade entrance
 className="animate-reveal-up"    // Slide up + fade
 className="animate-scale-in"     // Modal/dialog entrance
 className="animate-shake"        // Error feedback
+```
+
+### Background Patterns
+
+```tsx
+// Wave backgrounds (for sections/hero areas)
+className="bg-wave-warm"  // Coral + teal waves at bottom
+className="bg-wave-cool"   // Teal wave at top
+
+// Usage example
+<section className="bg-wave-warm min-h-screen">
+  <!-- Content -->
+</section>
 ```
 
 ## Validation (Zod)
@@ -269,6 +374,30 @@ if (!result.success) {
   setError(result.error.issues[0].message)
   return
 }
+```
+
+### Category/Section Schemas (Guide Type)
+
+```tsx
+import { categorySchema, categoryItemSchema } from '@/lib/utils/validation'
+
+// Validate a section/category
+const sectionResult = categorySchema.safeParse({
+  name: 'Best Restaurants',
+  icon: '🍜',
+  sortOrder: 0,
+  items: [
+    { title: 'Sukiyabashi Jiro', location: 'Ginza, Tokyo', notes: 'Reserve weeks ahead' }
+  ]
+})
+
+// Category item validation
+const itemResult = categoryItemSchema.safeParse({
+  title: 'Item title',         // Required, max 200 chars
+  location: 'Location',        // Optional, max 200 chars
+  notes: 'Notes here',         // Optional, max 1000 chars
+  sortOrder: 0,                // Optional, defaults to 0
+})
 ```
 
 ### Nullable Optional Fields
@@ -308,6 +437,58 @@ if (!user) redirect('/auth/login')
 import { ItineraryWithDays, Day, Activity } from '@/lib/types/models'
 import { Database } from '@/lib/supabase/database.types'
 ```
+
+## Web Share API Helpers
+
+```tsx
+import { canShareFiles, shareImage, buildShareData, createShareFile } from '@/lib/utils/share-helpers'
+
+// Check if Web Share API is supported
+const canShare = canShareFiles() // Returns boolean
+
+// Share an image with native share sheet
+const shared = await shareImage(
+  blob,              // Image blob from API
+  'Trip Title',      // Title
+  'trip-slug',       // Slug for URL
+  'square'           // Format: 'story' | 'square' | 'portrait'
+)
+
+// Returns true if share initiated, false if cancelled or unsupported
+// Automatically builds caption: "Check out my trip: {title} on Stashport! {url}"
+
+// Manual share data building
+const file = createShareFile(blob, 'filename.png')
+const shareData = buildShareData(file, 'Trip Title', 'trip-slug')
+await navigator.share(shareData)
+```
+
+**Browser Support:**
+- ✅ Mobile Safari (iOS), Chrome Android, Samsung Internet
+- ⚠️ Desktop browsers (limited support)
+- ❌ Firefox (no support)
+
+## Date Utilities (date-fns)
+
+```tsx
+import { format, differenceInDays, isPast, isToday, isTomorrow } from 'date-fns'
+
+// Format dates for display
+format(date, 'MMM d')           // "Jan 22"
+format(date, 'MMM d, yyyy')     // "Jan 22, 2026"
+
+// Date range display
+const dateRange = `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d')}`
+
+// Trip countdown calculations
+const daysUntil = differenceInDays(startDate, new Date())
+if (isToday(startDate)) { /* show "Today!" badge */ }
+if (isTomorrow(startDate)) { /* show "Tomorrow" badge */ }
+if (isPast(startDate)) { /* trip has started/ended */ }
+```
+
+**Used in:**
+- `trip-card.tsx` - Date range display and "days until trip" countdown badges
 
 ## Autosave Hook
 
@@ -395,6 +576,255 @@ console.log('[DB] Query itineraries - Results:', { count: data.length, hasMore }
 - **Include context:** User ID (not email), entity IDs, counts, status
 - **Avoid logging:** Passwords, tokens, full email addresses, sensitive PII
 
+## Itinerary Type Behavior
+
+The form dynamically adapts based on the selected itinerary type:
+
+### Daily Itinerary ('daily')
+- **Purpose**: Day-by-day trip planning
+- **Date Handling**: Travel dates section is **shown** and **required**
+- **Days Generation**: Auto-generates day cards from date range
+- **Terminology**: Uses "days" (e.g., "3 days planned")
+- **Section Header**: "Your Itinerary" with 📅 icon
+- **UI**: Timeline view with day numbers and dates
+
+### Guide Itinerary ('guide')
+- **Purpose**: Curated collections of favorite spots
+- **Date Handling**: Travel dates section is **hidden** (dates not needed)
+- **Days Generation**: Manual - user adds sections with "Add Section" button
+- **Terminology**: Uses "sections" (e.g., "3 sections planned")
+- **Section Header**: "Your Favorites" with ❤️ icon
+- **Empty State**: Shows helpful prompt to add first section
+- **UI**: Section-based view without dates
+- **Database**: Uses `categories` and `category_items` tables (not `days`/`activities`)
+- **API**: Send `sections[]` array in request body (or `categories[]`)
+
+### Section Presets (Guide Type)
+
+```tsx
+import { SECTION_PRESETS, getSectionPreset, DEFAULT_SECTION_ICON } from '@/lib/constants/section-presets'
+
+// 12 predefined section templates
+SECTION_PRESETS.map(preset => ({
+  icon: preset.icon,        // '🍜', '☕', '🏛️', etc.
+  name: preset.name,        // 'Best Restaurants', 'Coffee & Cafés', etc.
+  placeholder: preset.placeholder,
+}))
+
+// Get a specific preset
+const preset = getSectionPreset('Best Restaurants')  // { icon: '🍜', name: '...', placeholder: '...' }
+
+// Default icon for custom sections
+const icon = DEFAULT_SECTION_ICON  // '📍'
+
+// Available presets:
+// 🍜 Best Restaurants, ☕ Coffee & Cafés, 🏛️ Must-See Attractions,
+// 🌿 Hidden Gems, 🛍️ Shopping, 🌅 Viewpoints, 🍸 Nightlife,
+// 🎨 Art & Culture, 🏖️ Beaches, 🥾 Hiking & Nature, 🏨 Where to Stay,
+// ✨ Custom Section
+```
+
+### SectionCards & SectionItem (Guide Type UI)
+
+```tsx
+import { SectionCards, Section } from '@/components/itinerary/section-cards'
+import { SectionItem, SectionItemData } from '@/components/itinerary/section-item'
+import { AddSectionModal } from '@/components/itinerary/add-section-modal'
+
+// Section data structure
+interface Section {
+  name: string           // Section name (e.g., "Best Restaurants")
+  icon: string           // Emoji icon (e.g., "🍜")
+  sortOrder: number      // Position in list
+  items: SectionItemData[]
+}
+
+interface SectionItemData {
+  title: string          // Place name (required)
+  location?: string      // Location/address
+  notes?: string         // Tips or notes
+  sortOrder?: number     // Position in section
+}
+
+// Usage in itinerary form (guide type)
+const [sections, setSections] = useState<Section[]>([])
+
+{itineraryType === 'guide' ? (
+  <SectionCards
+    sections={sections}
+    onSectionsChange={setSections}
+  />
+) : (
+  <DayCards days={days} onDaysChange={setDays} />
+)}
+
+// Features:
+// - Timeline-style layout with vertical connector
+// - Expandable/collapsible sections
+// - Editable section titles (click to edit)
+// - Add/remove items within sections
+// - Item count badges
+// - Empty state with placeholder text
+// - "Add place" button per section
+```
+
+### AddSectionModal
+
+```tsx
+import { AddSectionModal } from '@/components/itinerary/add-section-modal'
+
+<AddSectionModal
+  open={showModal}
+  onOpenChange={setShowModal}
+  onAddSection={(section) => {
+    // { name: string, icon: string }
+    handleAddSection(section)
+  }}
+  existingSectionNames={sections.map(s => s.name)}
+/>
+
+// Features:
+// - Grid of 12 preset section templates
+// - "Already added" indicator for used presets
+// - Custom section creator with emoji picker
+// - 12 emoji options for custom sections
+// - Back to presets navigation
+```
+
+## Public Trip Page Features (`/t/[slug]`)
+
+The public trip view uses an immersive editorial design with two hero variants:
+
+### Hero Section (With Cover Photo)
+- Full-width immersive hero (70-80vh height)
+- Cover photo as full-bleed background with cinematic gradient overlay
+- Glass morphism destination badge (`bg-white/15 backdrop-blur-md`)
+- Large display title (up to 7xl), meta info (days, activities, tags)
+- Creator attribution with Avatar, Share button
+
+### Hero Section (Without Cover Photo)
+- Gradient background (`from-primary-500 via-primary-600 to-secondary-600`)
+- Dot pattern overlay and decorative blurred shapes
+- Same content layout as cover photo variant
+
+### Day Cards (Timeline View)
+- Large gradient day number badges (rounded squares with shadow)
+- Timeline layout with left border (`border-primary-200`)
+- Activity cards with icon, title, location, time, notes
+- Timeline dots connecting activities
+
+### Footer CTA
+- Full-width gradient section with "Inspired by this trip?" messaging
+- Share and "Plan Your Own" action buttons
+
+## Explore API
+
+```tsx
+// Fetch public itineraries from other users
+const response = await fetch('/api/itineraries/explore?page=1&limit=12')
+const { itineraries, pagination } = await response.json()
+
+// Query parameters:
+// - page: number (default: 1)
+// - limit: number (default: 12, max: 50)
+// - destination: string (filter by destination)
+// - tags: string (comma-separated tag filter)
+// - sort: 'recent' | 'popular' (default: 'recent')
+// - type: 'daily' | 'guide' | 'all' (default: 'all')
+
+// Response shape:
+interface ExploreResponse {
+  itineraries: {
+    id: string
+    title: string
+    description: string | null
+    destination: string | null
+    slug: string
+    budgetLevel: number | null
+    type: 'daily' | 'guide'
+    coverPhotoUrl: string | null
+    createdAt: string
+    dayCount: number
+    tags: string[]
+    creator: {
+      id: string
+      displayName: string
+      avatarColor: string
+    }
+  }[]
+  pagination: {
+    page: number
+    limit: number
+    totalCount: number
+    totalPages: number
+    hasMore: boolean
+  }
+}
+```
+
+### ExploreCard & ExploreGrid
+
+```tsx
+import { ExploreCard, ExploreItinerary } from '@/components/itinerary/explore-card'
+import { ExploreGrid } from '@/components/itinerary/explore-grid'
+
+// Individual card for explore section
+<ExploreCard
+  itinerary={itinerary}  // ExploreItinerary interface
+  index={0}              // For staggered animation delay
+/>
+
+// Grid with loading, error, and empty states
+<ExploreGrid
+  itineraries={itineraries}
+  isLoading={isLoading}
+  error={error}
+  hasMore={hasMore}
+  onLoadMore={loadMore}
+/>
+
+// Features:
+// - Magazine-style editorial design
+// - Cover photo with cinematic gradient overlay
+// - Glass morphism destination badges (backdrop-blur-md)
+// - Type indicators (teal "Daily" / coral "Guide")
+// - Creator attribution with Avatar
+// - Staggered reveal animations
+// - "Load More" pagination
+```
+
+### Dashboard Tabs (My Trips / Explore)
+
+```tsx
+// URL-driven tab navigation
+// /dashboard?tab=explore - Shows explore grid
+// /dashboard (default) - Shows user's trips
+
+// Dashboard uses Suspense boundary for useSearchParams
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+// Tab state from URL
+const searchParams = useSearchParams()
+const activeTab = searchParams.get('tab') || 'my-trips'
+
+// Tab navigation updates URL without reload
+const handleTabChange = (tab: string) => {
+  const params = new URLSearchParams(searchParams)
+  if (tab === 'my-trips') {
+    params.delete('tab')
+  } else {
+    params.set('tab', tab)
+  }
+  router.push(`/dashboard?${params.toString()}`)
+}
+```
+
 ## Key Rules
 
 1. Use `@/` path alias for all imports
@@ -407,3 +837,4 @@ console.log('[DB] Query itineraries - Results:', { count: data.length, hasMore }
 8. Use `useAutosave` hook for forms that need draft recovery
 9. Add accessibility attributes (`role`, `aria-live`) to status messages
 10. Add detailed logs with prefixes (`[API]`, `[Auth]`, etc.) for key actions - see Logging section
+11. Form components should adapt to itinerary type - see Itinerary Type Behavior section

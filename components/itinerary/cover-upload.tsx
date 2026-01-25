@@ -191,7 +191,7 @@ export function CoverUpload({ value, onChange, disabled = false }: CoverUploadPr
                 {isUploading ? 'Uploading...' : 'Drop image here or click to browse'}
               </p>
               <p className="text-xs text-gray-500" id="upload-requirements">
-                JPG, PNG, or WebP • Max 5MB
+                Recommended: 1920×1080px (16:9) • JPG, PNG, WebP • Max 5MB
               </p>
             </div>
           </CardContent>

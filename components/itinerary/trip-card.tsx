@@ -1,19 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { format, differenceInDays, isPast, isToday, isTomorrow } from 'date-fns'
+import { toast } from 'sonner'
 import { ItineraryWithDays } from '@/lib/types/models'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagPill } from '@/components/ui/tag-pill'
-import { ShareModal } from './share-modal'
-import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2, DollarSign, Share2 } from 'lucide-react'
+import { Calendar, MapPin, Activity, Globe, Lock, Eye, Edit2, Link2, Trash2, DollarSign, Share2, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface TripCardProps {
   trip: ItineraryWithDays
   onView: () => void
   onEdit: () => void
-  onCopyLink: () => void
   onDelete: () => void
 }
 
@@ -21,12 +21,89 @@ export function TripCard({
   trip,
   onView,
   onEdit,
-  onCopyLink,
   onDelete,
 }: TripCardProps) {
-  const [showShareModal, setShowShareModal] = useState(false)
+  const router = useRouter()
   const totalActivities = trip.days.reduce((acc, day) => acc + day.activities.length, 0)
   const dayCount = trip.days.length
+
+  // Calculate date range from days
+  const datesWithValues = trip.days.filter(day => day.date).map(day => new Date(day.date!))
+  const hasDateRange = datesWithValues.length > 0 && trip.type === 'daily'
+  const dateRangeText = hasDateRange
+    ? datesWithValues.length === 1
+      ? format(datesWithValues[0], 'MMM d')
+      : `${format(datesWithValues[0], 'MMM d')} - ${format(datesWithValues[datesWithValues.length - 1], 'MMM d')}`
+    : null
+
+  // Calculate days until trip for countdown badge
+  const startDate = datesWithValues.length > 0 ? datesWithValues[0] : null
+  const getDaysUntilBadge = () => {
+    if (!startDate || trip.type !== 'daily') return null
+
+    const now = new Date()
+
+    // Don't show for past trips (unless it's today)
+    if (isPast(startDate) && !isToday(startDate)) return null
+
+    if (isToday(startDate)) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold bg-accent-100 text-accent-700 rounded-full animate-pulse">
+          Today!
+        </span>
+      )
+    }
+
+    if (isTomorrow(startDate)) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold bg-accent-100 text-accent-700 rounded-full">
+          Tomorrow
+        </span>
+      )
+    }
+
+    const daysUntil = differenceInDays(startDate, now)
+    if (daysUntil > 0 && daysUntil <= 30) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 rounded-full">
+          {daysUntil} day{daysUntil === 1 ? '' : 's'} away
+        </span>
+      )
+    }
+
+    return null
+  }
+
+  // Handle copy link to clipboard
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    const tripUrl = trip.is_public
+      ? `${window.location.origin}/t/${trip.slug}`
+      : `${window.location.origin}/itinerary/${trip.id}/edit`
+
+    try {
+      await navigator.clipboard.writeText(tripUrl)
+      toast.success('Link copied to clipboard!')
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = tripUrl
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+
+      try {
+        document.execCommand('copy')
+        toast.success('Link copied to clipboard!')
+      } catch (fallbackErr) {
+        toast.error('Failed to copy link')
+      }
+
+      document.body.removeChild(textArea)
+    }
+  }
 
   return (
     <Card
@@ -58,15 +135,30 @@ export function TripCard({
             )}
           />
         )}
-        {/* Destination Badge */}
-        {trip.destination && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-sm">
-            <MapPin className="w-4 h-4 text-neutral-600" />
-            <span className="text-xs font-semibold text-neutral-700">
-              {trip.destination}
-            </span>
-          </div>
-        )}
+        {/* Destination & Type Badges */}
+        <div className="absolute bottom-3 left-3 flex items-center gap-2">
+          {trip.destination && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-sm">
+              <MapPin className="w-4 h-4 text-neutral-600" />
+              <span className="text-xs font-semibold text-neutral-700">
+                {trip.destination}
+              </span>
+            </div>
+          )}
+
+          {/* Trip Type Badge */}
+          {trip.type === 'daily' ? (
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-secondary-100/95 backdrop-blur-sm text-secondary-700 rounded-full shadow-sm">
+              <Calendar className="w-3 h-3" />
+              <span className="text-xs font-semibold">Daily</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-primary-100/95 backdrop-blur-sm text-primary-700 rounded-full shadow-sm">
+              <Heart className="w-3 h-3" />
+              <span className="text-xs font-semibold">Guide</span>
+            </div>
+          )}
+        </div>
 
         {/* Public/Private Badge */}
         <div
@@ -104,6 +196,13 @@ export function TripCard({
           </p>
         )}
 
+        {/* Days Until Trip Badge */}
+        {getDaysUntilBadge() && (
+          <div className="mb-3">
+            {getDaysUntilBadge()}
+          </div>
+        )}
+
         {/* Tags */}
         {trip.tags && trip.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
@@ -120,9 +219,11 @@ export function TripCard({
               <Calendar className="w-4 h-4 text-primary-600" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-neutral-500">Days</span>
+              <span className="text-xs text-neutral-500">
+                {hasDateRange ? 'Dates' : 'Days'}
+              </span>
               <span className="text-sm font-semibold text-neutral-900">
-                {dayCount}
+                {hasDateRange ? dateRangeText : dayCount}
               </span>
             </div>
           </div>
@@ -179,7 +280,7 @@ export function TripCard({
               <Edit2 className="w-4 h-4 text-primary-600" />
             </button>
             <button
-              onClick={onCopyLink}
+              onClick={handleCopyLink}
               className="p-2 hover:bg-secondary-50 rounded-lg transition-colors"
               title="Copy link"
               aria-label="Copy share link"
@@ -190,7 +291,7 @@ export function TripCard({
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                setShowShareModal(true)
+                router.push(`/itinerary/${trip.id}/share`)
               }}
               className="p-2 hover:bg-accent-50 rounded-lg transition-colors"
               title="Share as image"
@@ -209,11 +310,6 @@ export function TripCard({
           </div>
         </div>
       </div>
-      <ShareModal
-        itinerary={trip}
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-      />
     </Card>
   )
 }

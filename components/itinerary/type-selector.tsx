@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { Card, CardContent } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ITINERARY_TYPES, ItineraryTypeKey } from '@/lib/constants/templates'
-import { Calendar, Heart } from 'lucide-react'
+import { Calendar, Heart, HelpCircle } from 'lucide-react'
 
 interface TypeSelectorProps {
   value: ItineraryTypeKey
@@ -22,8 +23,19 @@ export function TypeSelector({ value, onChange, disabled = false }: TypeSelector
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-heading font-medium text-gray-700">
+      <label className="flex items-center gap-2 text-sm font-heading font-medium text-gray-700">
         Trip Type
+        <Tooltip>
+          <TooltipTrigger type="button">
+            <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors" />
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            <div className="space-y-1">
+              <p><strong>Daily:</strong> Day-by-day itineraries with dates</p>
+              <p><strong>Guide:</strong> Curated lists without dates</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </label>
       <div className="grid grid-cols-2 gap-4">
         {Object.entries(ITINERARY_TYPES).map(([key, config]) => {

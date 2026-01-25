@@ -84,6 +84,202 @@ Complete documentation of the Stashport design system, including colors, typogra
 
 ---
 
+## 🌅 Sunlit Voyage Theme (Landing/Auth Pages)
+
+A warm, editorial travel aesthetic for logged-out pages (landing, login, signup).
+
+### Sunlit Color Palette
+
+#### Warm Sand/Cream Backgrounds
+```css
+--sand-50: #fdfcfa     /* Lightest - page background */
+--sand-100: #faf8f4    /* Light cream */
+--sand-200: #f5f0e6    /* Warm cream - section backgrounds */
+--sand-300: #ebe4d6    /* Borders */
+--sand-400: #d9cfc0    /* Subtle dividers */
+```
+
+#### Terracotta/Coral Accents
+```css
+--terra-400: #e07a5f   /* Primary terracotta - CTAs */
+--terra-500: #d4654a   /* Hover state */
+--terra-600: #c24d35   /* Active/pressed */
+```
+**Usage**: Primary buttons, brand panels (login), headlines, accents
+
+#### Sage/Olive Greens
+```css
+--sage-400: #8fa68a    /* Light sage */
+--sage-500: #6b7b5f    /* Primary sage - secondary actions */
+--sage-600: #5a6950    /* Darker sage */
+```
+**Usage**: Brand panels (signup), secondary elements, nature accents
+
+#### Warm Text Colors
+```css
+--ink-900: #2d2a26    /* Primary headlines */
+--ink-800: #3d3a35    /* Strong text */
+--ink-700: #4d4a44    /* Body text */
+--ink-600: #5d5a54    /* Secondary text */
+--ink-500: #7d7a74    /* Muted text */
+--ink-400: #9d9a94    /* Disabled/subtle */
+--ink-300: #bdb9b3    /* Very light text */
+```
+
+#### Golden Highlights
+```css
+--gold-400: #d4a574   /* Warm gold accent */
+--gold-500: #c4956a   /* Gold hover */
+--gold-600: #b08050   /* Gold active */
+```
+**Usage**: Special highlights, eyebrow labels, accent decorations
+
+### Sunlit Background Classes
+
+```css
+/* Basic warm gradient */
+.bg-sunlit {
+  background: linear-gradient(180deg, #fdfcfa 0%, #faf8f4 50%, #f5f0e6 100%);
+}
+
+/* With subtle color orbs */
+.bg-sunlit-warm {
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(224, 122, 95, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 0% 100%, rgba(212, 165, 116, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #fdfcfa 0%, #faf8f4 50%, #f5f0e6 100%);
+}
+
+/* Editorial style with terracotta and sage hints */
+.bg-sunlit-editorial {
+  background:
+    radial-gradient(ellipse 100% 50% at 80% 20%, rgba(224, 122, 95, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 20% 80%, rgba(143, 166, 138, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, #fdfcfa 0%, #faf8f4 40%, #f5f0e6 100%);
+}
+```
+
+### Sunlit Brand Panels (Auth Pages)
+
+```css
+/* Terracotta panel - Login page */
+.bg-brand-panel {
+  background: linear-gradient(145deg, #c24d35 0%, #d4654a 40%, #e07a5f 100%);
+}
+
+/* Sage panel - Signup page */
+.bg-brand-sage {
+  background: linear-gradient(145deg, #5a6950 0%, #6b7b5f 40%, #8fa68a 100%);
+}
+```
+
+### Sunlit Shadows
+
+```css
+/* Terracotta glow shadows */
+.shadow-terra {
+  box-shadow: 0 4px 20px -4px rgba(224, 122, 95, 0.25),
+              0 12px 40px -8px rgba(224, 122, 95, 0.15);
+}
+
+.shadow-terra-lg {
+  box-shadow: 0 8px 30px -4px rgba(224, 122, 95, 0.3),
+              0 20px 60px -12px rgba(224, 122, 95, 0.2);
+}
+
+/* Warm neutral shadows */
+.shadow-warm {
+  box-shadow: 0 4px 20px -4px rgba(45, 42, 38, 0.08),
+              0 12px 40px -8px rgba(45, 42, 38, 0.05);
+}
+
+.shadow-warm-lg {
+  box-shadow: 0 8px 30px -4px rgba(45, 42, 38, 0.12),
+              0 20px 60px -12px rgba(45, 42, 38, 0.08);
+}
+```
+
+### Sunlit Text Gradients
+
+```css
+/* Terracotta gradient text */
+.text-gradient-terra {
+  background: linear-gradient(135deg, #e07a5f 0%, #d4654a 50%, #c24d35 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gold gradient text */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #d4a574 0%, #c4956a 50%, #b08050 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Sage gradient text */
+.text-gradient-sage {
+  background: linear-gradient(135deg, #8fa68a 0%, #6b7b5f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+```
+
+### Sunlit Patterns
+
+```css
+/* Dot pattern */
+.pattern-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Light dots (for dark panels) */
+.pattern-dots-light {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.2) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Passport stamp decoration */
+.stamp-decoration::before {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background-image: url("data:image/svg+xml,..."); /* Stashport stamp SVG */
+  opacity: 0.3;
+}
+```
+
+### Sunlit Glass Effects
+
+```css
+.glass-warm {
+  background: rgba(253, 252, 250, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(45, 42, 38, 0.08);
+}
+
+.glass-white {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(45, 42, 38, 0.06);
+}
+```
+
+### Sunlit Feature Cards
+
+```css
+.feature-card {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+}
+```
+
+---
+
 ## 🔤 Typography System
 
 ### Font Families
@@ -629,7 +825,7 @@ All text meets WCAG AA standards:
 
 ---
 
-**Design System Version**: 1.0.0 (Foundation)
-**Last Updated**: January 12, 2026
-**Status**: ✅ Foundation Complete & Stable | 🚧 Application UX Still in Development
-**Note**: Design system is production-grade and stable. The application as a whole requires additional UX testing and feature refinement before launch.
+**Design System Version**: 1.1.0 (Sunlit Voyage)
+**Last Updated**: January 25, 2026
+**Status**: ✅ Foundation Complete & Stable | ✅ Sunlit Voyage Theme Added
+**Note**: Design system is production-grade and stable. New "Sunlit Voyage" warm editorial theme added for landing and auth pages.

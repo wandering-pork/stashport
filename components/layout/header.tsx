@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Menu, X, ChevronDown } from 'lucide-react'
+import { Menu, X, ChevronDown, Search, MapPin, Compass } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { useAuth } from '@/lib/auth/auth-context'
@@ -26,7 +26,10 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { signOut } = useAuth()
 
@@ -64,10 +67,32 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
   }, [])
 
   const handleSignOut = async () => {
-    await signOut()
-    setIsMenuOpen(false)
-    router.push('/')
+    console.log('[Header] handleSignOut called')
+    try {
+      await signOut()
+      console.log('[Header] signOut completed, redirecting to home')
+      setIsMenuOpen(false)
+      router.push('/')
+    } catch (err) {
+      console.error('[Header] handleSignOut error:', err)
+    }
   }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/explore?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
+      setIsSearchOpen(false)
+    }
+  }
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchOpen])
 
   const userInitial = userName.charAt(0).toUpperCase()
 
@@ -82,21 +107,72 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
       )}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-        {/* Logo - Bold Playfair Display */}
+        {/* Logo - Compass Badge + Brand Name */}
         <Link
           href="/"
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-300"
+          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity duration-300"
         >
-          <span className="text-2xl">✈️</span>
-          <span className="text-2xl font-display font-bold hidden sm:inline text-primary-600">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e07a5f] to-[#d4654a] flex items-center justify-center shadow-sm">
+            <Compass className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="text-xl font-display font-bold hidden sm:inline text-[#2d2a26]">
             Stashport
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center justify-end gap-8 h-full">
+        <nav className="hidden md:flex items-center justify-end gap-6 h-full">
           {isAuthenticated ? (
             <>
+              {/* Search Bar - Collapsible */}
+              <div className="relative">
+                {isSearchOpen ? (
+                  <form onSubmit={handleSearch} className="flex items-center animate-fade-in">
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search destinations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className={cn(
+                          'w-48 pl-9 pr-3 py-2 rounded-lg',
+                          'bg-neutral-50 border border-neutral-200',
+                          'font-body text-sm text-neutral-900 placeholder:text-neutral-400',
+                          'focus:outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100',
+                          'transition-all duration-200'
+                        )}
+                        onBlur={() => {
+                          // Delay closing to allow click on submit
+                          setTimeout(() => {
+                            if (!searchQuery) setIsSearchOpen(false)
+                          }, 200)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setSearchQuery('')
+                            setIsSearchOpen(false)
+                          }
+                        }}
+                      />
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className={cn(
+                      'p-2 rounded-lg',
+                      'text-neutral-500 hover:text-primary-600 hover:bg-primary-50',
+                      'transition-all duration-200'
+                    )}
+                    aria-label="Search destinations"
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
               {/* Nav Items */}
               <Link
                 href="/dashboard"
@@ -110,6 +186,19 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
                 )}
               >
                 Dashboard
+              </Link>
+              <Link
+                href="/dashboard/trips"
+                className={cn(
+                  'text-sm font-heading font-bold uppercase',
+                  'text-neutral-700 hover:text-primary-600',
+                  'transition-colors duration-300 h-full flex items-center',
+                  'relative pb-1',
+                  'hover:after:content-[""] hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0',
+                  'hover:after:h-0.5 hover:after:bg-primary-500 hover:after:transition-all'
+                )}
+              >
+                My Trips
               </Link>
               <Link
                 href="/itinerary/new"
@@ -180,11 +269,27 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
           ) : (
             <>
               <Link
+                href="/explore"
+                className={cn(
+                  'text-sm font-heading font-bold uppercase',
+                  'text-neutral-700 hover:text-primary-600',
+                  'transition-colors duration-300 h-full flex items-center',
+                  'relative pb-1',
+                  'hover:after:content-[""] hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0',
+                  'hover:after:h-0.5 hover:after:bg-primary-500 hover:after:transition-all'
+                )}
+              >
+                Explore
+              </Link>
+              <Link
                 href="/auth/login"
                 className={cn(
                   'text-sm font-heading font-bold uppercase',
                   'text-neutral-700 hover:text-primary-600',
-                  'transition-colors duration-300 h-full flex items-center'
+                  'transition-colors duration-300 h-full flex items-center',
+                  'relative pb-1',
+                  'hover:after:content-[""] hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0',
+                  'hover:after:h-0.5 hover:after:bg-primary-500 hover:after:transition-all'
                 )}
               >
                 Login
@@ -233,6 +338,26 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
             <div className="flex flex-col gap-2 p-4">
               {isAuthenticated ? (
                 <>
+                  {/* Mobile Search */}
+                  <form onSubmit={handleSearch} className="px-2 py-2">
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                      <input
+                        type="text"
+                        placeholder="Search destinations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className={cn(
+                          'w-full pl-10 pr-4 py-3 rounded-xl',
+                          'bg-neutral-50 border border-neutral-200',
+                          'font-body text-sm text-neutral-900 placeholder:text-neutral-400',
+                          'focus:outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100',
+                          'transition-all duration-200'
+                        )}
+                      />
+                    </div>
+                  </form>
+
                   <Link
                     href="/dashboard"
                     className={cn(
@@ -244,6 +369,30 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/trips"
+                    className={cn(
+                      'px-4 py-4 text-neutral-700 font-heading font-bold uppercase text-sm',
+                      'hover:bg-neutral-100 active:bg-neutral-200 rounded-lg transition-colors duration-200',
+                      'focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                      'min-h-[44px] flex items-center'
+                    )}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Trips
+                  </Link>
+                  <Link
+                    href="/explore"
+                    className={cn(
+                      'px-4 py-4 text-neutral-700 font-heading font-bold uppercase text-sm',
+                      'hover:bg-neutral-100 active:bg-neutral-200 rounded-lg transition-colors duration-200',
+                      'focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                      'min-h-[44px] flex items-center'
+                    )}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Explore
                   </Link>
                   <Link
                     href="/itinerary/new"
@@ -273,6 +422,18 @@ export function Header({ isAuthenticated = false, userName = 'User' }: HeaderPro
                 </>
               ) : (
                 <>
+                  <Link
+                    href="/explore"
+                    className={cn(
+                      'px-4 py-4 text-neutral-700 font-heading font-bold uppercase text-sm',
+                      'hover:bg-neutral-100 active:bg-neutral-200 rounded-lg transition-colors duration-200',
+                      'focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                      'min-h-[44px] flex items-center'
+                    )}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Explore
+                  </Link>
                   <Link
                     href="/auth/login"
                     className={cn(

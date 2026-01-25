@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { itinerarySchema, daySchema, activitySchema } from '@/lib/utils/validation'
+import { itinerarySchema, daySchema, activitySchema, categorySchema, categoryItemSchema } from '@/lib/utils/validation'
 import { randomUUID } from 'crypto'
 
 // GET - Fetch a single itinerary
@@ -22,6 +22,10 @@ export async function GET(
         days(
           *,
           activities(*)
+        ),
+        categories(
+          *,
+          category_items(*)
         )
       `
       )
@@ -36,13 +40,28 @@ export async function GET(
       )
     }
 
+    // Sort categories and their items by sort_order
+    const sortedCategories = itinerary.categories
+      ?.sort((a: any, b: any) => a.sort_order - b.sort_order)
+      .map((cat: any) => ({
+        ...cat,
+        items: cat.category_items?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
+      })) || []
+
+    const response = {
+      ...itinerary,
+      categories: sortedCategories,
+    }
+
     console.log('[API] GET /api/itineraries/[id] - Success:', {
-      id: itinerary.id,
-      slug: itinerary.slug,
-      daysCount: itinerary.days?.length || 0
+      id: response.id,
+      slug: response.slug,
+      type: response.type,
+      daysCount: response.days?.length || 0,
+      categoriesCount: response.categories?.length || 0,
     })
 
-    return NextResponse.json(itinerary)
+    return NextResponse.json(response)
   } catch (err) {
     console.error('[API] GET /api/itineraries/[id] - Unexpected error:', err)
     return NextResponse.json(
@@ -179,8 +198,108 @@ export async function PUT(
       }
     }
 
-    // Handle days update if provided
-    if (days && Array.isArray(days)) {
+    // Handle content based on itinerary type
+    const itineraryType = body.type || 'daily'
+    const sections = body.sections || body.categories
+
+    if (itineraryType === 'guide' && sections && Array.isArray(sections)) {
+      // Guide type: Update categories and category items
+
+      // Delete existing categories (cascade deletes category_items)
+      const { error: deleteCategoriesError } = await supabase
+        .from('categories')
+        .delete()
+        .eq('itinerary_id', id)
+
+      if (deleteCategoriesError) {
+        console.error('Delete categories error:', deleteCategoriesError)
+      }
+
+      // Insert new categories
+      if (sections.length > 0) {
+        const categoriesToInsert = sections.map((section: any, index: number) => {
+          const categoryValidation = categorySchema.safeParse({
+            name: section.name || section.title,
+            icon: section.icon || '📍',
+            sortOrder: section.sortOrder ?? index,
+          })
+
+          if (!categoryValidation.success) {
+            throw new Error(
+              `Invalid section data: ${categoryValidation.error.issues[0].message}`
+            )
+          }
+
+          return {
+            id: section.id || randomUUID(),
+            itinerary_id: id,
+            name: categoryValidation.data.name,
+            icon: categoryValidation.data.icon,
+            sort_order: categoryValidation.data.sortOrder,
+            created_at: section.created_at || new Date().toISOString(),
+          }
+        })
+
+        const { data: insertedCategories, error: categoriesError } = await supabase
+          .from('categories')
+          .insert(categoriesToInsert)
+          .select()
+
+        if (categoriesError) {
+          console.error('Categories insert error:', categoriesError)
+        }
+
+        // Handle category items
+        if (insertedCategories) {
+          const itemsToInsert: any[] = []
+
+          sections.forEach((section: any, sectionIndex: number) => {
+            const items = section.items || []
+            if (items && Array.isArray(items)) {
+              items.forEach((item: any, itemIndex: number) => {
+                const itemValidation = categoryItemSchema.safeParse({
+                  title: item.title,
+                  location: item.location,
+                  notes: item.notes,
+                  sortOrder: item.sortOrder ?? itemIndex,
+                })
+
+                if (!itemValidation.success) {
+                  throw new Error(
+                    `Invalid item data: ${itemValidation.error.issues[0].message}`
+                  )
+                }
+
+                const categoryId = insertedCategories[sectionIndex]?.id
+                if (categoryId) {
+                  itemsToInsert.push({
+                    id: item.id || randomUUID(),
+                    category_id: categoryId,
+                    title: itemValidation.data.title,
+                    location: itemValidation.data.location || null,
+                    notes: itemValidation.data.notes || null,
+                    sort_order: itemValidation.data.sortOrder,
+                    created_at: item.created_at || new Date().toISOString(),
+                  })
+                }
+              })
+            }
+          })
+
+          if (itemsToInsert.length > 0) {
+            const { error: itemsError } = await supabase
+              .from('category_items')
+              .insert(itemsToInsert)
+
+            if (itemsError) {
+              console.error('Category items insert error:', itemsError)
+            }
+          }
+        }
+      }
+    } else if (days && Array.isArray(days)) {
+      // Daily type: Update days and activities
+
       // Delete existing days
       const { error: deleteError } = await supabase
         .from('days')
@@ -288,6 +407,10 @@ export async function PUT(
         days(
           *,
           activities(*)
+        ),
+        categories(
+          *,
+          category_items(*)
         )
       `
         )
@@ -305,9 +428,18 @@ export async function PUT(
       .select('tag')
       .eq('itinerary_id', id)
 
+    // Sort categories and their items by sort_order
+    const sortedCategories = completeItinerary.categories
+      ?.sort((a: any, b: any) => a.sort_order - b.sort_order)
+      .map((cat: any) => ({
+        ...cat,
+        items: cat.category_items?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
+      })) || []
+
     const response = {
       ...completeItinerary,
       tags: updatedTags?.map(t => t.tag) || [],
+      categories: sortedCategories,
     }
 
     console.log('[API] PUT /api/itineraries/[id] - Success:', {

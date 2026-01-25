@@ -4,9 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/auth-context'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { MapPin, Share2, Bookmark, Compass, ArrowRight, Sparkles } from 'lucide-react'
-import { cn } from '@/lib/utils/cn'
+import { MapPin, Compass, Share2, BookOpen, ArrowRight, Sparkles, Users, Globe2 } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
@@ -14,273 +12,387 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading])
+
+  if (isLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fdfcfa]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e07a5f] mx-auto mb-4" />
+          <p className="text-[#7d7a74]">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-mesh-hero overflow-hidden grain-overlay">
-      {/* Hero Section - Editorial Asymmetric Layout */}
-      <section className="relative min-h-screen">
-        {/* Decorative Elements */}
-        <div className="absolute top-20 right-[10%] w-72 h-72 bg-primary-200 shape-blob opacity-20 animate-float" />
-        <div className="absolute bottom-20 left-[5%] w-96 h-96 bg-secondary-200 shape-blob-alt opacity-15 animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/3 right-[30%] w-4 h-4 bg-primary-500 rounded-full opacity-60" />
-        <div className="absolute top-1/2 left-[15%] w-3 h-3 bg-secondary-500 rounded-full opacity-50" />
-        <div className="absolute bottom-1/3 right-[20%] w-2 h-2 bg-accent-500 rounded-full opacity-70" />
+    <div className="min-h-screen bg-[#fdfcfa] overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative">
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Warm gradient orbs */}
+          <div className="absolute top-20 right-[15%] w-[500px] h-[500px] bg-[#e07a5f]/8 rounded-full blur-[120px]" />
+          <div className="absolute bottom-40 left-[10%] w-[400px] h-[400px] bg-[#8fa68a]/6 rounded-full blur-[100px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4a574]/5 rounded-full blur-[150px]" />
 
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-20 lg:pt-0 min-h-screen flex items-center">
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
-            {/* Left Column - Main Content */}
-            <div className="lg:col-span-7 relative z-10">
-              {/* Editorial Badge */}
-              <div
-                className="inline-flex items-center gap-2 mb-8 px-4 py-2 bg-white/80 backdrop-blur-sm border border-primary-200 rounded-full shadow-coral animate-reveal-up stagger-1"
-              >
-                <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
-                <span className="text-xs font-heading font-bold uppercase tracking-wider text-primary-700">
-                  Plan. Share. Inspire.
-                </span>
+          {/* Dot pattern */}
+          <div
+            className="absolute inset-0 opacity-40"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.07) 1px, transparent 0)',
+              backgroundSize: '32px 32px'
+            }}
+          />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-16 pt-12 lg:pt-20 pb-20 lg:pb-28">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column - Text */}
+            <div className="max-w-xl">
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#f5f0e6] rounded-full mb-8 animate-fade-in">
+                <Sparkles className="w-4 h-4 text-[#d4a574]" />
+                <span className="text-sm font-medium text-[#6b7b5f]">Plan · Share · Discover</span>
               </div>
 
-              {/* Main Headline - Dramatically Large */}
-              <h1 className="text-editorial-display text-6xl sm:text-7xl lg:text-8xl xl:text-9xl text-neutral-900 mb-6 animate-reveal-up stagger-2">
+              {/* Main Headline */}
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[#2d2a26] leading-[1.05] tracking-tight mb-6 animate-slide-in-up">
                 Your next
                 <br />
-                <span className="text-gradient-vibrant">adventure</span>
+                adventure
                 <br />
-                starts here
+                <span className="text-gradient-terra">starts here</span>
               </h1>
 
-              {/* Decorative Line */}
-              <div className="decorative-line w-32 mb-8 animate-reveal-up stagger-3" />
-
-              {/* Subheading */}
-              <p className="text-xl lg:text-2xl text-neutral-600 mb-10 max-w-xl font-body leading-relaxed animate-reveal-up stagger-4">
-                Create stunning travel itineraries, discover journeys from fellow explorers, and share your adventures with the world.
+              {/* Subheadline */}
+              <p className="text-lg lg:text-xl text-[#5d5a54] leading-relaxed mb-10 animate-slide-in-up" style={{ animationDelay: '100ms' }}>
+                Create beautiful travel itineraries, discover journeys from explorers worldwide, and share your stories with stunning visual guides.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 animate-reveal-up stagger-5">
+              <div className="flex flex-col sm:flex-row gap-4 animate-slide-in-up" style={{ animationDelay: '200ms' }}>
                 <Button
                   size="lg"
                   onClick={() => router.push('/auth/signup')}
-                  className="font-heading font-bold text-base px-8 shadow-coral hover:shadow-coral-lg"
+                  className="bg-[#e07a5f] hover:bg-[#d4654a] text-white shadow-terra text-base px-8 h-14"
                 >
-                  Start Planning
-                  <ArrowRight className="w-5 h-5 ml-1" />
+                  Start Planning Free
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button
                   size="lg"
-                  variant="tertiary"
-                  onClick={() => router.push('/auth/login')}
-                  className="font-heading font-bold text-base"
+                  variant="secondary"
+                  onClick={() => router.push('/explore')}
+                  className="border-[#d9cfc0] text-[#4d4a44] hover:bg-[#f5f0e6] hover:border-[#bdb9b3] h-14"
                 >
-                  I have an account
+                  Explore Trips
                 </Button>
               </div>
 
               {/* Social Proof */}
-              <div className="mt-12 flex items-center gap-6 animate-reveal-up stagger-6">
-                <div className="flex -space-x-3">
-                  {['bg-primary-400', 'bg-secondary-400', 'bg-accent-400', 'bg-primary-300'].map((bg, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'w-10 h-10 rounded-full border-2 border-white',
-                        bg
-                      )}
-                    />
+              <div className="mt-12 pt-8 border-t border-[#ebe4d6] animate-slide-in-up" style={{ animationDelay: '300ms' }}>
+                <div className="flex items-center gap-6">
+                  <div className="flex -space-x-3">
+                    {['#e07a5f', '#6b7b5f', '#d4a574', '#8fa68a'].map((color, i) => (
+                      <div
+                        key={i}
+                        className="w-10 h-10 rounded-full border-2 border-[#fdfcfa] flex items-center justify-center text-white text-xs font-bold"
+                        style={{ backgroundColor: color }}
+                      >
+                        {['JM', 'SK', 'AL', 'TN'][i]}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#2d2a26]">Join 2,400+ travelers</p>
+                    <p className="text-sm text-[#7d7a74]">Planning their next journey</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Feature Preview Cards */}
+            <div className="relative hidden lg:block">
+              {/* Floating Card 1 - Main */}
+              <div
+                className="relative z-10 bg-white rounded-2xl shadow-warm-lg p-6 animate-slide-in-right"
+                style={{ animationDelay: '150ms' }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#e07a5f]/10 flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-[#e07a5f]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#2d2a26]">7 Days in Portugal</h3>
+                    <p className="text-sm text-[#7d7a74]">Lisbon · Porto · Sintra</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { day: 'Day 1', place: 'Explore Alfama District', time: '9:00 AM' },
+                    { day: 'Day 2', place: 'Day trip to Sintra Palace', time: '8:30 AM' },
+                    { day: 'Day 3', place: 'Food tour in Belém', time: '11:00 AM' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-[#f5f0e6] last:border-0">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-[#e07a5f] bg-[#e07a5f]/10 px-2 py-1 rounded">{item.day}</span>
+                        <span className="text-sm text-[#4d4a44]">{item.place}</span>
+                      </div>
+                      <span className="text-xs text-[#9d9a94]">{item.time}</span>
+                    </div>
                   ))}
                 </div>
-                <p className="text-sm text-neutral-600 font-body">
-                  <span className="font-bold text-neutral-900">2,400+</span> travelers planning adventures
+              </div>
+
+              {/* Floating Card 2 - Stats */}
+              <div
+                className="absolute -bottom-8 -left-8 bg-white rounded-xl shadow-warm p-4 animate-slide-in-up z-20"
+                style={{ animationDelay: '300ms' }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-[#6b7b5f]/10 flex items-center justify-center">
+                    <Globe2 className="w-5 h-5 text-[#6b7b5f]" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-[#2d2a26]">50+</p>
+                    <p className="text-xs text-[#7d7a74]">Countries explored</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Card 3 - Share */}
+              <div
+                className="absolute -top-4 -right-4 bg-white rounded-xl shadow-warm p-4 animate-slide-in-down z-20"
+                style={{ animationDelay: '400ms' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#d4a574]/10 flex items-center justify-center">
+                    <Share2 className="w-4 h-4 text-[#d4a574]" />
+                  </div>
+                  <span className="text-sm font-medium text-[#4d4a44]">Share anywhere</span>
+                </div>
+              </div>
+
+              {/* Decorative compass */}
+              <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-64 h-64 opacity-[0.03] compass-light" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          {/* Section Header */}
+          <div className="text-center mb-16 lg:mb-20">
+            <span className="inline-block text-sm font-semibold text-[#6b7b5f] uppercase tracking-wider mb-4">
+              Everything you need
+            </span>
+            <h2 className="text-3xl lg:text-5xl font-bold text-[#2d2a26] mb-6">
+              Plan trips like a pro
+            </h2>
+            <p className="text-lg text-[#5d5a54] max-w-2xl mx-auto">
+              From quick city breaks to month-long adventures, Stashport gives you the tools to plan, organize, and share every detail.
+            </p>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="feature-card group bg-white rounded-2xl p-8 shadow-warm hover:shadow-warm-lg">
+              <div className="w-14 h-14 rounded-2xl bg-[#e07a5f]/10 flex items-center justify-center mb-6 group-hover:bg-[#e07a5f]/15 transition-colors">
+                <BookOpen className="w-7 h-7 text-[#e07a5f]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#2d2a26] mb-3">Day-by-Day Planning</h3>
+              <p className="text-[#5d5a54] leading-relaxed mb-4">
+                Build detailed itineraries with times, locations, and notes. Add activities, restaurants, and experiences for each day of your trip.
+              </p>
+              <ul className="space-y-2 text-sm text-[#7d7a74]">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#e07a5f]" />
+                  Timeline view with drag & drop
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#e07a5f]" />
+                  Add photos and notes
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#e07a5f]" />
+                  Auto-save as you plan
+                </li>
+              </ul>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="feature-card group bg-white rounded-2xl p-8 shadow-warm hover:shadow-warm-lg">
+              <div className="w-14 h-14 rounded-2xl bg-[#6b7b5f]/10 flex items-center justify-center mb-6 group-hover:bg-[#6b7b5f]/15 transition-colors">
+                <Users className="w-7 h-7 text-[#6b7b5f]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#2d2a26] mb-3">Discover & Save</h3>
+              <p className="text-[#5d5a54] leading-relaxed mb-4">
+                Find inspiration from fellow travelers. Browse curated itineraries and save the ones you love to your personal collection.
+              </p>
+              <ul className="space-y-2 text-sm text-[#7d7a74]">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#6b7b5f]" />
+                  Browse by destination
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#6b7b5f]" />
+                  Filter by trip type
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#6b7b5f]" />
+                  One-click save & customize
+                </li>
+              </ul>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="feature-card group bg-white rounded-2xl p-8 shadow-warm hover:shadow-warm-lg">
+              <div className="w-14 h-14 rounded-2xl bg-[#d4a574]/10 flex items-center justify-center mb-6 group-hover:bg-[#d4a574]/15 transition-colors">
+                <Share2 className="w-7 h-7 text-[#d4a574]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#2d2a26] mb-3">Share Everywhere</h3>
+              <p className="text-[#5d5a54] leading-relaxed mb-4">
+                Generate beautiful shareable links with stunning preview cards. Perfect for social media, blogs, or sending to friends.
+              </p>
+              <ul className="space-y-2 text-sm text-[#7d7a74]">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4a574]" />
+                  Beautiful share cards
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4a574]" />
+                  Multiple formats (Story, Square)
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4a574]" />
+                  Download as image
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="relative py-24 lg:py-32 bg-[#f5f0e6]">
+        {/* Pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.04) 1px, transparent 0)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-16">
+          {/* Section Header */}
+          <div className="text-center mb-16 lg:mb-20">
+            <span className="inline-block text-sm font-semibold text-[#e07a5f] uppercase tracking-wider mb-4">
+              How it works
+            </span>
+            <h2 className="text-3xl lg:text-5xl font-bold text-[#2d2a26] mb-6">
+              Three steps to your
+              <br />
+              perfect trip
+            </h2>
+          </div>
+
+          {/* Steps */}
+          <div className="grid md:grid-cols-3 gap-12 lg:gap-16">
+            {[
+              {
+                number: '01',
+                title: 'Create Your Journey',
+                description: 'Start with a destination. Add dates, activities, and all the details that make your trip unique. Our intuitive editor makes planning a breeze.',
+                color: '#e07a5f'
+              },
+              {
+                number: '02',
+                title: 'Get Inspired',
+                description: 'Browse trips from travelers who\'ve been there. Find hidden gems, local favorites, and insider tips. Save what you love to your collection.',
+                color: '#6b7b5f'
+              },
+              {
+                number: '03',
+                title: 'Share Your Story',
+                description: 'Turn your itinerary into a beautiful visual guide. Share the link, download as an image, or post directly to social media.',
+                color: '#d4a574'
+              }
+            ].map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="relative inline-block mb-6">
+                  <span
+                    className="text-8xl lg:text-9xl font-bold opacity-10 number-badge"
+                    style={{ color: step.color }}
+                  >
+                    {step.number}
+                  </span>
+                  <div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full"
+                    style={{ backgroundColor: step.color }}
+                  />
+                </div>
+                <h3 className="text-xl font-bold text-[#2d2a26] mb-4">{step.title}</h3>
+                <p className="text-[#5d5a54] leading-relaxed max-w-sm mx-auto">
+                  {step.description}
                 </p>
               </div>
-            </div>
-
-            {/* Right Column - Feature Cards Stack */}
-            <div className="lg:col-span-5 relative">
-              {/* Decorative vertical line */}
-              <div className="hidden lg:block absolute -left-6 top-0 bottom-0 decorative-line-vertical opacity-30" />
-
-              <div className="space-y-4">
-                {/* Feature Card 1 */}
-                <Card
-                  variant="elevated"
-                  className="group border-editorial shadow-dramatic hover:shadow-dramatic-lg hover:-translate-y-1 transition-all duration-500 animate-reveal-right stagger-2"
-                >
-                  <CardContent className="p-6 flex items-start gap-5">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-coral">
-                      <MapPin className="w-7 h-7 text-primary-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-heading font-bold text-neutral-900 mb-1">Day-by-Day Planning</h3>
-                      <p className="text-sm text-neutral-600 font-body leading-relaxed">
-                        Build detailed itineraries with times, locations, and notes for every moment.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Feature Card 2 */}
-                <Card
-                  variant="elevated"
-                  className="group border-editorial shadow-dramatic hover:shadow-dramatic-lg hover:-translate-y-1 transition-all duration-500 animate-reveal-right stagger-3"
-                >
-                  <CardContent className="p-6 flex items-start gap-5">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-secondary-100 to-secondary-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-teal">
-                      <Share2 className="w-7 h-7 text-secondary-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-heading font-bold text-neutral-900 mb-1">Share Everywhere</h3>
-                      <p className="text-sm text-neutral-600 font-body leading-relaxed">
-                        Beautiful links with preview cards that look stunning on any platform.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Feature Card 3 */}
-                <Card
-                  variant="elevated"
-                  className="group border-editorial shadow-dramatic hover:shadow-dramatic-lg hover:-translate-y-1 transition-all duration-500 animate-reveal-right stagger-4"
-                >
-                  <CardContent className="p-6 flex items-start gap-5">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-100 to-accent-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-golden">
-                      <Bookmark className="w-7 h-7 text-accent-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-heading font-bold text-neutral-900 mb-1">Stash & Customize</h3>
-                      <p className="text-sm text-neutral-600 font-body leading-relaxed">
-                        Save trips from other travelers and make them uniquely yours.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-xs font-heading font-bold uppercase text-neutral-400 tracking-wider">Explore</span>
-          <div className="w-px h-8 bg-gradient-to-b from-neutral-300 to-transparent" />
-        </div>
-      </section>
-
-      {/* How It Works Section - Editorial Grid */}
-      <section className="py-32 px-6 lg:px-12 bg-white grain-overlay relative">
-        {/* Decorative Pattern */}
-        <div className="absolute inset-0 pattern-dots opacity-30" />
-
-        <div className="max-w-[1400px] mx-auto relative z-10">
-          {/* Section Header - Asymmetric */}
-          <div className="grid lg:grid-cols-12 gap-8 mb-20">
-            <div className="lg:col-span-5">
-              <span className="text-xs font-heading font-bold uppercase tracking-wider text-primary-600 mb-4 block">
-                How It Works
-              </span>
-              <h2 className="text-editorial-headline text-5xl lg:text-6xl text-neutral-900">
-                Three steps to your perfect trip
-              </h2>
-            </div>
-            <div className="lg:col-span-5 lg:col-start-8 flex items-end">
-              <p className="text-lg text-neutral-600 font-body leading-relaxed">
-                From inspiration to publication, Stashport makes travel planning effortless and beautiful.
-              </p>
-            </div>
-          </div>
-
-          {/* Steps - Large Numbers */}
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-16">
-            {/* Step 1 */}
-            <div className="group">
-              <div className="mb-6 relative">
-                <span className="stat-number text-8xl lg:text-9xl text-primary-100 group-hover:text-primary-200 transition-colors duration-500">01</span>
-                <div className="absolute bottom-2 left-0 w-16 h-1 bg-primary-500 rounded-full" />
-              </div>
-              <h3 className="text-2xl font-heading font-bold text-neutral-900 mb-4">Create Your Journey</h3>
-              <p className="text-neutral-600 font-body leading-relaxed">
-                Build beautiful day-by-day itineraries with every detail planned. Add locations, times, notes, and more.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="group">
-              <div className="mb-6 relative">
-                <span className="stat-number text-8xl lg:text-9xl text-secondary-100 group-hover:text-secondary-200 transition-colors duration-500">02</span>
-                <div className="absolute bottom-2 left-0 w-16 h-1 bg-secondary-500 rounded-full" />
-              </div>
-              <h3 className="text-2xl font-heading font-bold text-neutral-900 mb-4">Discover & Save</h3>
-              <p className="text-neutral-600 font-body leading-relaxed">
-                Find inspiration from fellow travelers. One-click save any trip to your collection and customize it.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="group">
-              <div className="mb-6 relative">
-                <span className="stat-number text-8xl lg:text-9xl text-accent-100 group-hover:text-accent-200 transition-colors duration-500">03</span>
-                <div className="absolute bottom-2 left-0 w-16 h-1 bg-accent-500 rounded-full" />
-              </div>
-              <h3 className="text-2xl font-heading font-bold text-neutral-900 mb-4">Share & Inspire</h3>
-              <p className="text-neutral-600 font-body leading-relaxed">
-                Publish your adventures with beautiful shareable links. Inspire others to explore the world.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section - Bold & Dramatic */}
-      <section className="relative py-32 px-6 lg:px-12 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900" />
-        <div className="absolute inset-0 pattern-diagonal opacity-10" />
+      {/* CTA Section */}
+      <section className="relative py-24 lg:py-32 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#e07a5f]/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-[#6b7b5f]/5 rounded-full blur-[80px]" />
 
-        {/* Decorative Shapes */}
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-primary-500 rounded-full opacity-20 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary-500 rounded-full opacity-10 blur-3xl" />
-
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full">
-            <Sparkles className="w-4 h-4 text-white" />
-            <span className="text-xs font-heading font-bold uppercase tracking-wider text-white/90">
-              Start for free
-            </span>
+        <div className="relative max-w-4xl mx-auto px-6 lg:px-16 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#e07a5f]/10 rounded-full mb-8">
+            <span className="w-2 h-2 bg-[#e07a5f] rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-[#e07a5f]">Free to start</span>
           </div>
 
-          <h2 className="text-editorial-display text-5xl sm:text-6xl lg:text-7xl text-white mb-8">
-            Ready to explore?
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#2d2a26] mb-6 leading-tight">
+            Ready to plan your
+            <br />
+            next adventure?
           </h2>
 
-          <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto font-body leading-relaxed">
-            Join thousands of travel creators planning adventures and sharing inspiration with the world.
+          <p className="text-lg text-[#5d5a54] mb-10 max-w-xl mx-auto">
+            Join thousands of travelers who use Stashport to plan, share, and discover amazing journeys around the world.
           </p>
 
           <Button
             size="lg"
-            variant="secondary"
             onClick={() => router.push('/auth/signup')}
-            className="font-heading font-bold text-base px-10 bg-white text-primary-700 border-white hover:bg-primary-50 shadow-dramatic-lg"
+            className="bg-[#e07a5f] hover:bg-[#d4654a] text-white shadow-terra-lg text-lg px-10 h-16"
           >
-            Get Started Free
+            Get Started — It&apos;s Free
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 lg:px-12 bg-neutral-900 text-neutral-400">
-        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="py-12 px-6 lg:px-16 border-t border-[#ebe4d6]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">✈️</span>
-            <span className="text-xl font-display font-bold text-white">Stashport</span>
+            <div className="w-8 h-8 rounded-lg bg-[#e07a5f] flex items-center justify-center">
+              <Compass className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-bold text-[#2d2a26]">Stashport</span>
           </div>
-          <p className="text-sm font-body">
-            &copy; {new Date().getFullYear()} Stashport. Plan. Share. Inspire.
+          <p className="text-sm text-[#7d7a74]">
+            © {new Date().getFullYear()} Stashport. Plan · Share · Discover.
           </p>
         </div>
       </footer>
