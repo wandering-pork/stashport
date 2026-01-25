@@ -125,18 +125,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('[Auth] Sign out initiated')
     try {
-      // Create a fresh client for sign out to avoid any stale state issues
-      const freshClient = createClient()
-      console.log('[Auth] Calling supabase.auth.signOut...')
-      const { error } = await freshClient.auth.signOut()
-      console.log('[Auth] supabase.auth.signOut returned')
-      if (error) {
-        console.error('[Auth] Sign out error:', error)
-      } else {
-        console.log('[Auth] Sign out successful')
-      }
+      // Clear local state immediately for responsive UX
       setUser(null)
       setProfile(null)
+
+      // Call signOut with a timeout to prevent hanging
+      console.log('[Auth] Calling supabase.auth.signOut...')
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+      )
+
+      try {
+        const { error } = await Promise.race([signOutPromise, timeoutPromise]) as { error: any }
+        if (error) {
+          console.error('[Auth] Sign out error:', error)
+        } else {
+          console.log('[Auth] Sign out successful')
+        }
+      } catch (timeoutErr) {
+        console.warn('[Auth] Sign out timed out, but local state cleared')
+      }
     } catch (err) {
       console.error('[Auth] Sign out exception:', err)
     }
