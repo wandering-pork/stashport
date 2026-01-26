@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -22,16 +22,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Timeout helper
+const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ])
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Track if initial session has been processed to prevent double profile fetch
+  const initialSessionProcessed = useRef(false)
+  // Track last profile fetch to debounce rapid fetches
+  const lastProfileFetch = useRef<{ userId: string; timestamp: number } | null>(null)
+
   // Memoize supabase client to prevent recreation on every render
   const supabase = useMemo(() => createClient(), [])
 
   // Fetch user profile from our users table, create if doesn't exist
+  // Includes debouncing to prevent rapid duplicate fetches
   const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
+    // Debounce: skip if same user was fetched within last 500ms
+    const now = Date.now()
+    if (lastProfileFetch.current &&
+        lastProfileFetch.current.userId === userId &&
+        now - lastProfileFetch.current.timestamp < 500) {
+      console.log('[Auth] Skipping duplicate profile fetch (debounced)')
+      return profile // Return current profile instead of fetching again
+    }
+    lastProfileFetch.current = { userId, timestamp: now }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -68,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Auth] Error fetching profile:', err)
       return null
     }
-  }, [supabase])
+  }, [supabase, profile])
 
   // Refresh profile (can be called after profile updates)
   const refreshProfile = useCallback(async () => {
@@ -79,12 +103,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile])
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with timeout to prevent infinite loading
     const getInitialSession = async () => {
       console.log('[Auth] Getting initial session...')
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const currentUser = session?.user ?? null
+        // Add 5-second timeout to prevent hanging if Supabase is unresponsive
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          5000,
+          { data: { session: null }, error: null }
+        )
+
+        const currentUser = sessionResult.data?.session?.user ?? null
         console.log('[Auth] Initial session result:', { hasUser: !!currentUser, userId: currentUser?.id })
         setUser(currentUser)
 
@@ -93,8 +123,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
           setProfile(profileData)
         }
+
+        // Mark initial session as processed
+        initialSessionProcessed.current = true
       } catch (error) {
         console.error('[Auth] Error getting session:', error)
+        initialSessionProcessed.current = true
       } finally {
         setIsLoading(false)
       }
@@ -107,10 +141,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[Auth] Auth state changed:', { event, hasUser: !!session?.user, userId: session?.user?.id })
+
+      // Skip INITIAL_SESSION event if we've already processed initial session
+      // This prevents double profile fetch on page load
+      if (event === 'INITIAL_SESSION' && initialSessionProcessed.current) {
+        console.log('[Auth] Skipping duplicate INITIAL_SESSION event')
+        return
+      }
+
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
-      // Fetch profile on auth change
+      // Fetch profile on auth change (debouncing handled in fetchProfile)
       if (currentUser) {
         const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
         setProfile(profileData)
@@ -125,29 +167,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('[Auth] Sign out initiated')
     try {
-      // Clear local state immediately for responsive UX
-      setUser(null)
-      setProfile(null)
-
       // Call signOut with a timeout to prevent hanging
       console.log('[Auth] Calling supabase.auth.signOut...')
       const signOutPromise = supabase.auth.signOut()
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+      const timeoutPromise = new Promise<{ error: Error }>((resolve) =>
+        setTimeout(() => resolve({ error: new Error('Sign out timeout') }), 5000)
       )
 
-      try {
-        const { error } = await Promise.race([signOutPromise, timeoutPromise]) as { error: any }
-        if (error) {
-          console.error('[Auth] Sign out error:', error)
+      const { error } = await Promise.race([signOutPromise, timeoutPromise])
+
+      if (error) {
+        if (error.message === 'Sign out timeout') {
+          console.warn('[Auth] Sign out timed out, forcing local cleanup...')
         } else {
-          console.log('[Auth] Sign out successful')
+          console.error('[Auth] Sign out error:', error)
         }
-      } catch (timeoutErr) {
-        console.warn('[Auth] Sign out timed out, but local state cleared')
+        // Even on error/timeout, clear local state and force reload to ensure clean slate
+        setUser(null)
+        setProfile(null)
+        // Force a full page reload to clear any cached auth state
+        window.location.href = '/auth/login'
+        return
       }
+
+      console.log('[Auth] Sign out successful')
+      // Clear local state after successful server signout
+      setUser(null)
+      setProfile(null)
     } catch (err) {
       console.error('[Auth] Sign out exception:', err)
+      // On any error, still clear state and redirect
+      setUser(null)
+      setProfile(null)
+      window.location.href = '/auth/login'
     }
   }
 

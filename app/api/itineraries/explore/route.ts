@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       currentUserId: user?.id || 'guest',
     })
 
-    // Build the query for public itineraries
+    // Build the query for public itineraries - include tags in join to avoid N+1
     let query = supabase
       .from('itineraries')
       .select(`
@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
         ),
         days(
           id
-        )
+        ),
+        trip_tags(tag)
       `, { count: 'exact' })
       .eq('is_public', true)
 
@@ -113,34 +114,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get itinerary IDs for tag lookup
-    const itineraryIds = itineraries?.map(i => i.id) || []
+    // Tags are now included in the join, extract them from each itinerary
+    let processedItineraries = (itineraries || []).map(itinerary => {
+      const tags = (itinerary as any).trip_tags?.map((t: { tag: string }) => t.tag) || []
+      return { ...itinerary, extractedTags: tags }
+    })
 
-    // Fetch tags for all itineraries
-    let tagsMap: Record<string, string[]> = {}
-    if (itineraryIds.length > 0) {
-      const { data: tags, error: tagsError } = await supabase
-        .from('trip_tags')
-        .select('itinerary_id, tag')
-        .in('itinerary_id', itineraryIds)
-
-      if (!tagsError && tags) {
-        tagsMap = tags.reduce((acc, { itinerary_id, tag }) => {
-          if (!acc[itinerary_id]) acc[itinerary_id] = []
-          acc[itinerary_id].push(tag)
-          return acc
-        }, {} as Record<string, string[]>)
-      }
-    }
-
-    // Filter by tags if specified (post-query filter for simplicity)
-    let filteredItineraries = itineraries || []
+    // Filter by tags if specified (using the joined tags)
+    let filteredItineraries = processedItineraries
     if (tagsParam) {
       const filterTags = tagsParam.split(',').map(t => t.trim().toLowerCase())
-      filteredItineraries = filteredItineraries.filter(itinerary => {
-        const itineraryTags = tagsMap[itinerary.id] || []
+      filteredItineraries = processedItineraries.filter(itinerary => {
         return filterTags.some(filterTag =>
-          itineraryTags.some(tag => tag.toLowerCase() === filterTag)
+          itinerary.extractedTags.some((tag: string) => tag.toLowerCase() === filterTag)
         )
       })
     }
@@ -157,7 +143,7 @@ export async function GET(request: NextRequest) {
       coverPhotoUrl: itinerary.cover_photo_url,
       createdAt: itinerary.created_at,
       dayCount: itinerary.days?.length || 0,
-      tags: tagsMap[itinerary.id] || [],
+      tags: itinerary.extractedTags,
       creator: {
         id: (itinerary.users as any)?.id,
         displayName: (itinerary.users as any)?.display_name || 'Anonymous',

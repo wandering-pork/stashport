@@ -22,10 +22,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('[API] GET /api/itineraries - Fetching for user:', { userId: user.id })
+    // Parse query parameters for pagination
+    const { searchParams } = new URL(request.url)
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)))
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const offset = (page - 1) * limit
 
-    // Fetch user's itineraries with nested days, activities, and categories
-    const { data: itineraries, error } = await supabase
+    console.log('[API] GET /api/itineraries - Fetching for user:', { userId: user.id, limit, page })
+
+    // Fetch user's itineraries with nested days, activities, categories, AND tags in one query
+    const { data: itineraries, error, count } = await supabase
       .from('itineraries')
       .select(
         `
@@ -37,11 +43,14 @@ export async function GET(request: NextRequest) {
         categories(
           *,
           category_items(*)
-        )
-      `
+        ),
+        trip_tags(tag)
+      `,
+        { count: 'exact' }
       )
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('[API] GET /api/itineraries - Database error:', error)
@@ -52,30 +61,15 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[API] GET /api/itineraries - Fetched itineraries:', {
-      count: itineraries?.length || 0
+      count: itineraries?.length || 0,
+      total: count
     })
 
-    // Fetch tags for all itineraries
-    const itineraryIds = itineraries?.map(i => i.id) || []
-
-    let tagsMap: Record<string, string[]> = {}
-    if (itineraryIds.length > 0) {
-      const { data: tags, error: tagsError } = await supabase
-        .from('trip_tags')
-        .select('itinerary_id, tag')
-        .in('itinerary_id', itineraryIds)
-
-      if (!tagsError && tags) {
-        tagsMap = tags.reduce((acc, { itinerary_id, tag }) => {
-          if (!acc[itinerary_id]) acc[itinerary_id] = []
-          acc[itinerary_id].push(tag)
-          return acc
-        }, {} as Record<string, string[]>)
-      }
-    }
-
-    // Merge tags into itineraries and sort categories
+    // Transform itineraries - tags are now included in the query
     const itinerariesWithTags = itineraries?.map(itinerary => {
+      // Extract tags from the joined trip_tags
+      const tags = (itinerary as any).trip_tags?.map((t: { tag: string }) => t.tag) || []
+
       // Sort categories and their items by sort_order
       const sortedCategories = (itinerary as any).categories
         ?.sort((a: any, b: any) => a.sort_order - b.sort_order)
@@ -84,9 +78,12 @@ export async function GET(request: NextRequest) {
           items: cat.category_items?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
         })) || []
 
+      // Remove trip_tags from output (we've extracted them to 'tags')
+      const { trip_tags, ...rest } = itinerary as any
+
       return {
-        ...itinerary,
-        tags: tagsMap[itinerary.id] || [],
+        ...rest,
+        tags,
         categories: sortedCategories,
       }
     })

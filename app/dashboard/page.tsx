@@ -72,8 +72,9 @@ function DashboardContent() {
         setIsLoading(true)
         setError(null)
 
-        // Fetch user's trips
-        const response = await fetch('/api/itineraries')
+        // Fetch user's trips with reasonable limit for dashboard view
+        // Dashboard only shows 2 trips, but fetch more for filtering upcoming vs recent
+        const response = await fetch('/api/itineraries?limit=20')
         if (!response.ok) throw new Error('Failed to fetch itineraries')
         const trips = await response.json()
         setItineraries(trips || [])
@@ -121,22 +122,31 @@ function DashboardContent() {
   }
 
   // Smart hybrid: Get upcoming trips first, fallback to recent
+  // Optimized to pre-compute start dates instead of recalculating during sort
   const { displayTrips, hasUpcoming } = useMemo(() => {
-    // Filter trips with future start dates (upcoming or today)
-    const upcoming = itineraries
-      .filter((trip) => {
-        if (trip.type !== 'daily') return false
-        const dates = trip.days.filter((d) => d.date).map((d) => new Date(d.date!))
-        if (dates.length === 0) return false
-        const startDate = dates[0]
-        // Only include if the trip hasn't started yet (future) or starts today
+    // Pre-compute start dates for all trips to avoid repeated calculations
+    const tripsWithDates = itineraries.map((trip) => {
+      let startDate: Date | null = null
+      if (trip.type === 'daily' && trip.days.length > 0) {
+        const datesWithValues = trip.days.filter((d) => d.date)
+        if (datesWithValues.length > 0) {
+          startDate = new Date(datesWithValues[0].date!)
+        }
+      }
+      return { trip, startDate }
+    })
+
+    // Filter for upcoming trips (future or today)
+    const upcoming = tripsWithDates
+      .filter(({ trip, startDate }) => {
+        if (trip.type !== 'daily' || !startDate) return false
         return isFuture(startDate) || isToday(startDate)
       })
       .sort((a, b) => {
-        const dateA = new Date(a.days.find((d) => d.date)?.date || 0)
-        const dateB = new Date(b.days.find((d) => d.date)?.date || 0)
-        return dateA.getTime() - dateB.getTime()
+        // Use pre-computed dates
+        return (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0)
       })
+      .map(({ trip }) => trip)
 
     // If we have upcoming trips, return those
     if (upcoming.length >= 2) {

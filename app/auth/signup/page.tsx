@@ -86,11 +86,21 @@ export default function SignupPage() {
 
       if (error) {
         setError(error.message)
+        setIsOAuthLoading(null)
+        return
       }
+
+      // Don't reset loading state - page will redirect to OAuth provider
+      // If still on page after 3 seconds, OAuth redirect likely failed/blocked
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          setError('Unable to open signup page. Please check if popups are blocked.')
+          setIsOAuthLoading(null)
+        }
+      }, 3000)
     } catch (err) {
       setError(`${provider} signup failed. Please try again.`)
       console.error(`${provider} signup error:`, err)
-    } finally {
       setIsOAuthLoading(null)
     }
   }

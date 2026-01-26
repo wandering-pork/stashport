@@ -9,6 +9,7 @@ function AuthCallbackContent() {
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(true)
+  const [statusMessage, setStatusMessage] = useState('Verifying your account...')
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -21,87 +22,125 @@ function AuthCallbackContent() {
 
       console.log('[Auth Callback] Starting callback processing', { code: !!code, tokenHash: !!tokenHash, type, errorParam })
 
-      // Handle error from Supabase
+      // Handle error from Supabase/OAuth provider
       if (errorParam) {
-        console.error('[Auth Callback] Error from Supabase:', errorParam, errorDescription)
-        setError(errorDescription || 'Authentication failed')
+        console.error('[Auth Callback] Error from provider:', errorParam, errorDescription)
+        // Translate common OAuth errors to user-friendly messages
+        let userMessage = errorDescription || 'Authentication failed'
+        if (errorParam === 'access_denied') {
+          userMessage = 'Access was denied. Please try again.'
+        } else if (errorParam === 'server_error') {
+          userMessage = 'The authentication server is temporarily unavailable. Please try again.'
+        }
+        setError(userMessage)
         setIsProcessing(false)
         return
       }
 
-      // Method 1: Token hash verification (recommended for email confirmation)
+      // Helper function to create/update user profile
+      const ensureUserProfile = async (userId: string, email: string): Promise<boolean> => {
+        try {
+          console.log('[Auth Callback] Ensuring user profile exists...')
+          const { error: upsertError } = await supabase
+            .from('users')
+            .upsert({
+              id: userId,
+              auth_id: userId,
+              email: email,
+            }, {
+              onConflict: 'id',
+              ignoreDuplicates: true
+            })
+
+          if (upsertError && !upsertError.message.includes('duplicate')) {
+            console.error('[Auth Callback] Error creating user profile:', upsertError)
+            return false
+          }
+          console.log('[Auth Callback] User profile ready')
+          return true
+        } catch (profileErr) {
+          console.error('[Auth Callback] Profile upsert exception:', profileErr)
+          return false
+        }
+      }
+
+      // Method 1: Token hash verification (for email confirmation)
       // This works even if user clicks link in different browser
       if (tokenHash && type) {
         try {
+          setStatusMessage('Confirming your email...')
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: type as 'email' | 'signup' | 'recovery' | 'email_change',
           })
 
           if (verifyError) {
-            console.error('Token verification error:', verifyError)
+            console.error('[Auth Callback] Token verification error:', verifyError)
             setError(verifyError.message)
             setIsProcessing(false)
             return
           }
 
-          if (data.user) {
-            // Create user profile record if needed
-            try {
-              await supabase
-                .from('users')
-                .upsert({
-                  id: data.user.id,
-                  auth_id: data.user.id,
-                  email: data.user.email!,
-                }, {
-                  onConflict: 'id',
-                  ignoreDuplicates: true
-                })
-            } catch {
-              // User record might already exist
-            }
+          if (data.user && data.user.email) {
+            setStatusMessage('Setting up your account...')
+            await ensureUserProfile(data.user.id, data.user.email)
           }
 
           console.log('[Auth Callback] Token verification successful, redirecting to dashboard...')
           window.location.href = '/dashboard'
           return
         } catch (err) {
-          console.error('Unexpected error during token verification:', err)
+          console.error('[Auth Callback] Unexpected error during token verification:', err)
           setError('An unexpected error occurred during verification')
           setIsProcessing(false)
           return
         }
       }
 
-      // Method 2: Code exchange (for OAuth and PKCE flow - requires same browser session)
+      // Method 2: Code exchange (for OAuth - requires same browser session)
       if (code) {
         try {
+          setStatusMessage('Completing sign in...')
           console.log('[Auth Callback] Exchanging code for session...')
 
-          // Exchange code with timeout to prevent hanging
+          // Show "taking longer than expected" after 5 seconds
+          const slowTimer = setTimeout(() => {
+            setStatusMessage('Taking longer than expected...')
+          }, 5000)
+
+          // Single 12-second timeout for the entire operation
           const exchangePromise = supabase.auth.exchangeCodeForSession(code)
           const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
-            setTimeout(() => resolve({ data: null, error: new Error('timeout') }), 8000)
+            setTimeout(() => resolve({ data: null, error: new Error('timeout') }), 12000)
           )
 
           const { data, error: exchangeError } = await Promise.race([exchangePromise, timeoutPromise])
+          clearTimeout(slowTimer)
 
-          // If timed out, check if we're actually authenticated anyway
+          // Handle timeout
           if (exchangeError?.message === 'timeout') {
-            console.log('[Auth Callback] Code exchange timed out, checking auth state...')
+            console.log('[Auth Callback] Code exchange timed out, checking if authenticated...')
+            setStatusMessage('Checking authentication status...')
+
+            // Quick check if session was actually created
             const { data: { user: currentUser } } = await supabase.auth.getUser()
+
             if (currentUser) {
-              console.log('[Auth Callback] User authenticated despite timeout, redirecting...')
+              console.log('[Auth Callback] User authenticated despite timeout')
+              if (currentUser.email) {
+                await ensureUserProfile(currentUser.id, currentUser.email)
+              }
               window.location.href = '/dashboard'
               return
             }
+
+            // Auth truly failed
             setError('Authentication timed out. Please try again.')
             setIsProcessing(false)
             return
           }
 
-          console.log('[Auth Callback] exchangeCodeForSession returned:', {
+          console.log('[Auth Callback] exchangeCodeForSession result:', {
             hasUser: !!data?.user,
             userId: data?.user?.id,
             hasSession: !!data?.session,
@@ -110,9 +149,11 @@ function AuthCallbackContent() {
 
           if (exchangeError) {
             console.error('[Auth Callback] Code exchange error:', exchangeError)
-            // Provide more helpful error message for PKCE issues
+            // Translate common errors to user-friendly messages
             if (exchangeError.message.includes('PKCE') || exchangeError.message.includes('code verifier')) {
-              setError('Session expired. Please sign up again using the same browser.')
+              setError('Your session expired. Please sign in again using the same browser.')
+            } else if (exchangeError.message.includes('invalid_grant')) {
+              setError('This sign-in link has expired. Please try again.')
             } else {
               setError(exchangeError.message)
             }
@@ -120,32 +161,10 @@ function AuthCallbackContent() {
             return
           }
 
-          // Create user profile record if needed (fire and forget - don't block redirect)
+          // Create user profile - AWAIT this before redirecting
           if (data?.user && data.user.email) {
-            console.log('[Auth Callback] Creating/updating user profile...')
-            // Wrap in async IIFE to handle errors without blocking
-            ;(async () => {
-              try {
-                const { error: upsertError } = await supabase
-                  .from('users')
-                  .upsert({
-                    id: data.user.id,
-                    auth_id: data.user.id,
-                    email: data.user.email!,
-                  }, {
-                    onConflict: 'id',
-                    ignoreDuplicates: true
-                  })
-
-                if (upsertError && !upsertError.message.includes('duplicate')) {
-                  console.error('[Auth Callback] Error creating user profile:', upsertError)
-                } else {
-                  console.log('[Auth Callback] User profile ready')
-                }
-              } catch (profileErr) {
-                console.error('[Auth Callback] Profile upsert exception:', profileErr)
-              }
-            })()
+            setStatusMessage('Setting up your account...')
+            await ensureUserProfile(data.user.id, data.user.email)
           }
 
           // Success - redirect to dashboard
@@ -183,9 +202,9 @@ function AuthCallbackContent() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary-600 mx-auto mb-4" />
           <h1 className="text-xl font-heading font-bold text-neutral-900">
-            Verifying your account...
+            {statusMessage}
           </h1>
-          <p className="text-neutral-600 mt-2">Please wait while we confirm your email.</p>
+          <p className="text-neutral-600 mt-2">Please wait, this should only take a moment.</p>
         </div>
       </div>
     )
