@@ -2,10 +2,6 @@ import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium'
 import { TemplateStyle, TemplateFormat, TEMPLATE_FORMATS } from '@/lib/constants/templates'
 
-// Configure chromium for serverless
-chromium.setHeadlessMode = true
-chromium.setGraphicsMode = false
-
 interface GenerateImageOptions {
   html: string
   format: TemplateFormat
