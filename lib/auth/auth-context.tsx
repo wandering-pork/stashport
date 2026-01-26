@@ -22,14 +22,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Timeout helper
-const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
-  return Promise.race([
-    promise,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
-  ])
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -103,18 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile])
 
   useEffect(() => {
-    // Get initial session with timeout to prevent infinite loading
+    // Get initial session
     const getInitialSession = async () => {
       console.log('[Auth] Getting initial session...')
       try {
-        // Add 5-second timeout to prevent hanging if Supabase is unresponsive
-        const sessionResult = await withTimeout(
-          supabase.auth.getSession(),
-          5000,
-          { data: { session: null }, error: null }
-        )
-
-        const currentUser = sessionResult.data?.session?.user ?? null
+        const { data: { session } } = await supabase.auth.getSession()
+        const currentUser = session?.user ?? null
         console.log('[Auth] Initial session result:', { hasUser: !!currentUser, userId: currentUser?.id })
         setUser(currentUser)
 
@@ -167,31 +153,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('[Auth] Sign out initiated')
     try {
-      // Call signOut with a timeout to prevent hanging
-      console.log('[Auth] Calling supabase.auth.signOut...')
-      const signOutPromise = supabase.auth.signOut()
-      const timeoutPromise = new Promise<{ error: Error }>((resolve) =>
-        setTimeout(() => resolve({ error: new Error('Sign out timeout') }), 5000)
-      )
-
-      const { error } = await Promise.race([signOutPromise, timeoutPromise])
-
+      const { error } = await supabase.auth.signOut()
       if (error) {
-        if (error.message === 'Sign out timeout') {
-          console.warn('[Auth] Sign out timed out, forcing local cleanup...')
-        } else {
-          console.error('[Auth] Sign out error:', error)
-        }
-        // Even on error/timeout, clear local state and force reload to ensure clean slate
+        console.error('[Auth] Sign out error:', error)
+        // Even on error, clear local state and redirect
         setUser(null)
         setProfile(null)
-        // Force a full page reload to clear any cached auth state
         window.location.href = '/auth/login'
         return
       }
 
       console.log('[Auth] Sign out successful')
-      // Clear local state after successful server signout
       setUser(null)
       setProfile(null)
     } catch (err) {
