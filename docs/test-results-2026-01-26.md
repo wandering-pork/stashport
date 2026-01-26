@@ -763,3 +763,85 @@ The Stashport application demonstrates solid data integrity and proper API imple
 - Remaining failures will require deeper investigation of form validation timing
 
 The application is production-ready from a data and API perspective. UI/UX testing should be performed manually or via E2E tests to complete coverage.
+
+---
+
+## 14. Update: 2026-01-27 Bug Fixes and Test Improvements
+
+### Critical Bug Fixed: Dashboard Infinite Loading
+
+**Issue:** After Google OAuth login, dashboard showed "Loading your adventures..." indefinitely.
+
+**Root Cause:** Dependency cycle in `lib/auth/auth-context.tsx`
+- `fetchProfile` included `profile` in its dependency array (line 87)
+- When profile state updated, `fetchProfile` was recreated
+- Main useEffect depended on `fetchProfile`, causing infinite re-runs
+- `isLoading` never became `false`
+
+**Fix Applied:**
+```typescript
+// Before (broken)
+}, [supabase, profile])
+
+// After (fixed)
+}, [supabase])
+```
+
+Also added null checks to prevent stale closure issues when debounce triggers.
+
+### Security Fix: GET /api/itineraries/[id] Authorization
+
+**Issue:** GET endpoint returned private itinerary data to any user without ownership check.
+
+**Fix Applied:** Added authorization check after 404 check:
+```typescript
+const { data: { user } } = await supabase.auth.getUser()
+if (!itinerary.is_public && (!user || itinerary.user_id !== user.id)) {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+}
+```
+
+### Additional Fixes
+
+| File | Change |
+|------|--------|
+| `app/itinerary/[id]/edit/page.tsx` | Redirect to dashboard on 403/404 |
+| `app/dashboard/page.tsx` | Added `data-testid` attributes for E2E |
+| `components/itinerary/itinerary-form.tsx` | Added `name="title"`, `data-testid`, `noValidate` |
+| `tests/e2e/auth.spec.ts` | SEC-003 now waits for client-side redirect |
+
+### E2E Test Results (2026-01-27)
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Passed | 39 | 44 | +5 |
+| Failed | 12 | 7 | -5 |
+
+**Tests Now Passing:**
+- AUTH-014: Login with wrong password shows error
+- AUTH-015: Login with unregistered email shows error
+- SEC-003: Accessing others edit page is denied
+- ITIN-001: Can create itinerary with title only
+- ITIN-003: Empty title shows validation error
+
+**Remaining Failures (7):**
+- DASH-001, DASH-020: Dashboard content detection (timing issues)
+- PUBLIC-005: Creator info not found on public trip
+- SHARE-001, SHARE-005, SHARE-020, SHARE-004: Share page auth/selector issues
+
+### Remaining Action Items
+
+| Priority | Item | Status |
+|----------|------|--------|
+| P0 | Auth context infinite loop | DONE |
+| P0 | GET authorization check | DONE |
+| P1 | data-testid attributes | DONE |
+| P1 | SEC-003 redirect | DONE |
+| P2 | Enable leaked password protection | PENDING (manual) |
+| P2 | RLS performance optimization | DEFERRED |
+
+### Commit Reference
+
+```
+54e8646 fix: resolve auth context infinite loop and improve E2E test coverage
+```
