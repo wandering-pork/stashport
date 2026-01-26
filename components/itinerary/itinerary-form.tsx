@@ -586,7 +586,7 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
 
   return (
     <TooltipProvider>
-      <form onSubmit={handleSubmit} className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface pb-32">
+      <form onSubmit={handleSubmit} noValidate className="min-h-screen bg-gradient-to-b from-color-surface via-cream to-color-surface pb-32">
         {/* Header Section - Clean and minimal */}
       <div className="max-w-4xl mx-auto px-4 pt-12 pb-8 animate-fade-in">
         <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900">
@@ -615,11 +615,13 @@ export function ItineraryForm({ initialData, isLoading = false }: ItineraryFormP
               <div>
                 <Input
                   label="Trip Title"
+                  name="title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Venice Summer Escape"
                   required
+                  data-testid="title-input"
                 />
               </div>
 

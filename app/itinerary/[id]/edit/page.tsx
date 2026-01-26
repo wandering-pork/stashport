@@ -30,10 +30,10 @@ export default function EditItineraryPage() {
         try {
           const response = await fetch(`/api/itineraries/${id}`)
           if (!response.ok) {
-            if (response.status === 404) {
-              setError('Itinerary not found')
-            } else if (response.status === 403) {
-              setError('You do not have permission to edit this itinerary')
+            if (response.status === 404 || response.status === 403) {
+              // Redirect to dashboard when itinerary not found or user doesn't have access
+              router.push('/dashboard')
+              return
             } else {
               setError('Failed to load itinerary')
             }

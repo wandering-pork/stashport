@@ -40,6 +40,18 @@ export async function GET(
       )
     }
 
+    // Authorization check for private itineraries
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Allow access if: itinerary is public OR user owns it
+    if (!itinerary.is_public && (!user || itinerary.user_id !== user.id)) {
+      console.log('[API] GET /api/itineraries/[id] - Forbidden: private itinerary, not owner')
+      return NextResponse.json(
+        { error: 'Forbidden - you do not have access to this itinerary' },
+        { status: 403 }
+      )
+    }
+
     // Sort categories and their items by sort_order
     const sortedCategories = itinerary.categories
       ?.sort((a: any, b: any) => a.sort_order - b.sort_order)

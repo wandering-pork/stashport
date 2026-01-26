@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastProfileFetch.current.userId === userId &&
         now - lastProfileFetch.current.timestamp < 500) {
       console.log('[Auth] Skipping duplicate profile fetch (debounced)')
-      return profile // Return current profile instead of fetching again
+      return null // Signal that fetch was skipped; caller should use existing state
     }
     lastProfileFetch.current = { userId, timestamp: now }
 
@@ -84,13 +84,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Auth] Error fetching profile:', err)
       return null
     }
-  }, [supabase, profile])
+  }, [supabase])
 
   // Refresh profile (can be called after profile updates)
   const refreshProfile = useCallback(async () => {
     if (user) {
       const profileData = await fetchProfile(user.id, user.email || undefined)
-      setProfile(profileData)
+      if (profileData !== null) {
+        setProfile(profileData)
+      }
     }
   }, [user, fetchProfile])
 
@@ -107,7 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch profile if user exists
         if (currentUser) {
           const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
-          setProfile(profileData)
+          if (profileData !== null) {
+            setProfile(profileData)
+          }
         }
 
         // Mark initial session as processed
@@ -141,7 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch profile on auth change (debouncing handled in fetchProfile)
       if (currentUser) {
         const profileData = await fetchProfile(currentUser.id, currentUser.email || undefined)
-        setProfile(profileData)
+        if (profileData !== null) {
+          setProfile(profileData)
+        }
       } else {
         setProfile(null)
       }

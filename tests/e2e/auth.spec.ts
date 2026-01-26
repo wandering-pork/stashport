@@ -207,19 +207,14 @@ test.describe('Authentication - Session', () => {
 
   // SEC-003: Cannot access other user's edit page
   test('SEC-003: accessing others edit page is denied', async ({ page }) => {
-    // Try to access a random itinerary edit page
-    const response = await page.goto('/itinerary/00000000-0000-0000-0000-000000000000/edit')
+    // Try to access a random itinerary edit page (unauthenticated)
+    await page.goto('/itinerary/00000000-0000-0000-0000-000000000000/edit')
 
-    // Should either redirect to login or show 403/404
+    // Wait for redirect to login or dashboard (client-side redirect)
+    await page.waitForURL(/\/(auth\/login|dashboard)/, { timeout: 10000 })
+
     const url = page.url()
-    const status = response?.status()
-
-    expect(
-      url.includes('/auth/login') ||
-      url.includes('/dashboard') ||
-      status === 403 ||
-      status === 404
-    ).toBeTruthy()
+    expect(url.includes('/auth/login') || url.includes('/dashboard')).toBeTruthy()
   })
 })
 

@@ -327,14 +327,14 @@ function DashboardContent() {
               </div>
 
               {displayTrips.length > 0 ? (
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-2 gap-6" data-testid="trips-grid">
                   {displayTrips.map((trip, index) => (
                     <UpcomingTripCard key={trip.id} trip={trip} index={index} showCountdown={hasUpcoming} />
                   ))}
                 </div>
               ) : (
                 /* Empty State for Upcoming Trips */
-                <Card variant="interactive" className="border-2 border-dashed border-neutral-200">
+                <Card variant="interactive" className="border-2 border-dashed border-neutral-200" data-testid="empty-state">
                   <CardContent padding="relaxed" className="text-center py-12">
                     <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
                       <Compass className="w-8 h-8 text-primary-500" />
@@ -370,7 +370,7 @@ function DashboardContent() {
               </div>
 
               {suggestions.length > 0 ? (
-                <div className="grid sm:grid-cols-3 gap-5">
+                <div className="grid sm:grid-cols-3 gap-5" data-testid="suggestions-grid">
                   {suggestions.map((itinerary, index) => (
                     <SuggestionCard key={itinerary.id} itinerary={itinerary} index={index} />
                   ))}
