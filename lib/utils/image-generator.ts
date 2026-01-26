@@ -2,6 +2,10 @@ import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium'
 import { TemplateStyle, TemplateFormat, TEMPLATE_FORMATS } from '@/lib/constants/templates'
 
+// Configure chromium for serverless
+chromium.setHeadlessMode = true
+chromium.setGraphicsMode = false
+
 interface GenerateImageOptions {
   html: string
   format: TemplateFormat
@@ -10,10 +14,13 @@ interface GenerateImageOptions {
 // Common Chrome paths for local development
 const LOCAL_CHROME_PATHS = {
   win32: [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    process.env.LOCALAPPDATA ? `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe` : '',
+    // Also try forward slash versions
     'C:/Program Files/Google/Chrome/Application/chrome.exe',
     'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-    process.env.LOCALAPPDATA + '/Google/Chrome/Application/chrome.exe',
-  ],
+  ].filter(Boolean),
   darwin: [
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   ],
@@ -26,6 +33,12 @@ const LOCAL_CHROME_PATHS = {
 async function getExecutablePath(): Promise<string> {
   const isDev = process.env.NODE_ENV === 'development'
 
+  console.log('[ImageGenerator] getExecutablePath called:', {
+    isDev,
+    platform: process.platform,
+    nodeEnv: process.env.NODE_ENV,
+  })
+
   // Allow override via environment variable
   if (process.env.CHROME_EXECUTABLE_PATH) {
     console.log('[ImageGenerator] Using CHROME_EXECUTABLE_PATH:', process.env.CHROME_EXECUTABLE_PATH)
@@ -37,19 +50,38 @@ async function getExecutablePath(): Promise<string> {
     const platform = process.platform as keyof typeof LOCAL_CHROME_PATHS
     const paths = LOCAL_CHROME_PATHS[platform] || []
 
+    console.log('[ImageGenerator] Checking paths for platform:', platform, paths)
+
     const fs = await import('fs')
     for (const chromePath of paths) {
-      if (chromePath && fs.existsSync(chromePath)) {
-        console.log('[ImageGenerator] Using local Chrome:', chromePath)
-        return chromePath
+      if (chromePath) {
+        const exists = fs.existsSync(chromePath)
+        console.log('[ImageGenerator] Checking path:', chromePath, 'exists:', exists)
+        if (exists) {
+          console.log('[ImageGenerator] Using local Chrome:', chromePath)
+          return chromePath
+        }
       }
     }
 
-    console.warn('[ImageGenerator] No local Chrome found, trying @sparticuz/chromium')
+    console.warn('[ImageGenerator] No local Chrome found at standard paths, trying @sparticuz/chromium')
   }
 
   // Fallback to serverless chromium (for production/Vercel)
-  return await chromium.executablePath()
+  try {
+    console.log('[ImageGenerator] Getting @sparticuz/chromium executable path...')
+    const execPath = await chromium.executablePath()
+    console.log('[ImageGenerator] Using @sparticuz/chromium:', execPath)
+
+    // Verify the path exists
+    if (execPath) {
+      return execPath
+    }
+    throw new Error('chromium.executablePath() returned empty')
+  } catch (err) {
+    console.error('[ImageGenerator] Failed to get chromium executable path:', err)
+    throw new Error(`Could not find Chrome or Chromium executable: ${err instanceof Error ? err.message : 'Unknown error'}`)
+  }
 }
 
 export async function generateImage(options: GenerateImageOptions): Promise<Buffer> {
@@ -68,9 +100,30 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
     const executablePath = await getExecutablePath()
     const isDev = process.env.NODE_ENV === 'development'
 
+    console.log('[ImageGenerator] Launching browser with:', {
+      executablePath,
+      isDev,
+      args: isDev ? ['--no-sandbox', '--disable-setuid-sandbox'] : 'chromium.args',
+    })
+
+    // Browser launch args
+    const browserArgs = isDev
+      ? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+      : [
+          ...chromium.args,
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-setuid-sandbox',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+        ]
+
+    console.log('[ImageGenerator] Browser args:', browserArgs.slice(0, 5), '...')
+
     // Launch browser
     browser = await puppeteer.launch({
-      args: isDev ? ['--no-sandbox', '--disable-setuid-sandbox'] : chromium.args,
+      args: browserArgs,
       defaultViewport: {
         width: formatConfig.width,
         height: formatConfig.height,

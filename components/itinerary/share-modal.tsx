@@ -92,7 +92,7 @@ export function ShareModal({ itinerary, isOpen, onClose }: ShareModalProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} maxWidth="4xl">
+    <Dialog open={isOpen} onOpenChange={onClose} maxWidth="4xl" data-testid="share-modal">
       <DialogHeader onClose={onClose}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
@@ -126,6 +126,9 @@ export function ShareModal({ itinerary, isOpen, onClose }: ShareModalProps) {
                       console.log('[Component] ShareModal - Style selected:', key)
                       setSelectedStyle(key as TemplateStyle)
                     }}
+                    aria-pressed={isSelected}
+                    data-template={key}
+                    data-selected={isSelected}
                     className={cn(
                       'group relative p-5 rounded-xl border-2 transition-all duration-300',
                       'hover:shadow-lg hover:-translate-y-1',
@@ -178,6 +181,9 @@ export function ShareModal({ itinerary, isOpen, onClose }: ShareModalProps) {
                       console.log('[Component] ShareModal - Format selected:', key)
                       setSelectedFormat(key as TemplateFormat)
                     }}
+                    aria-pressed={isSelected}
+                    data-format={key}
+                    data-selected={isSelected}
                     className={cn(
                       'group relative p-5 rounded-xl border-2 transition-all duration-300',
                       'hover:shadow-lg hover:-translate-y-1',
@@ -259,6 +265,7 @@ export function ShareModal({ itinerary, isOpen, onClose }: ShareModalProps) {
                 variant="secondary"
                 onClick={onClose}
                 disabled={isGenerating}
+                data-testid="close-modal"
               >
                 Cancel
               </Button>

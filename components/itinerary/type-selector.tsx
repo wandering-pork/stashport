@@ -47,6 +47,11 @@ export function TypeSelector({ value, onChange, disabled = false }: TypeSelector
               key={key}
               variant={isSelected ? 'elevated' : 'default'}
               accentColor={isSelected ? 'primary' : undefined}
+              role="button"
+              aria-pressed={isSelected}
+              data-testid={`type-selector-${key}`}
+              data-type={key}
+              data-selected={isSelected}
               className={cn(
                 'cursor-pointer transition-all duration-200',
                 isSelected && 'ring-2 ring-primary-500 ring-offset-2',

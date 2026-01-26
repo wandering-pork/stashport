@@ -8,9 +8,10 @@ interface DialogProps {
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
+  'data-testid'?: string
 }
 
-export function Dialog({ open, onOpenChange, children, maxWidth = 'md' }: DialogProps) {
+export function Dialog({ open, onOpenChange, children, maxWidth = 'md', 'data-testid': dataTestId }: DialogProps) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -42,7 +43,10 @@ export function Dialog({ open, onOpenChange, children, maxWidth = 'md' }: Dialog
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className={`bg-white rounded-lg shadow-lg ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto`}
+          role="dialog"
+          aria-modal="true"
+          data-testid={dataTestId}
+          className={`bg-white rounded-lg shadow-lg modal ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}

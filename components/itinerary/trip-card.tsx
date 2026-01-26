@@ -108,7 +108,8 @@ export function TripCard({
   return (
     <Card
       variant="interactive"
-      className="group overflow-hidden"
+      className="group overflow-hidden trip-card"
+      data-testid="trip-card"
       onClick={onView}
     >
       {/* Cover Photo / Gradient Header */}

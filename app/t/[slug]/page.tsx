@@ -154,7 +154,7 @@ export default function PublicTripPage() {
               )}
 
               {/* Title */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white mb-6 max-w-4xl leading-[1.1] tracking-tight">
+              <h1 data-testid="trip-title" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white mb-6 max-w-4xl leading-[1.1] tracking-tight">
                 {trip.title}
               </h1>
 
@@ -188,15 +188,16 @@ export default function PublicTripPage() {
 
               {/* Creator Row */}
               {trip.creator && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" data-testid="creator">
                   <Avatar
                     name={trip.creator.display_name}
                     color={trip.creator.avatar_color}
                     size="md"
+                    data-testid="creator-avatar"
                   />
                   <div>
                     <span className="text-white/60 text-sm font-body">Created by</span>
-                    <p className="text-white font-heading font-semibold">
+                    <p className="text-white font-heading font-semibold" data-testid="creator-name">
                       {trip.creator.display_name || 'Anonymous Traveler'}
                     </p>
                   </div>
@@ -235,7 +236,7 @@ export default function PublicTripPage() {
               )}
 
               {/* Title */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 max-w-4xl leading-[1.1] tracking-tight">
+              <h1 data-testid="trip-title" className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 max-w-4xl leading-[1.1] tracking-tight">
                 {trip.title}
               </h1>
 
@@ -269,15 +270,16 @@ export default function PublicTripPage() {
 
               {/* Creator Row */}
               {trip.creator && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" data-testid="creator">
                   <Avatar
                     name={trip.creator.display_name}
                     color={trip.creator.avatar_color}
                     size="md"
+                    data-testid="creator-avatar"
                   />
                   <div>
                     <span className="text-white/60 text-sm font-body">Created by</span>
-                    <p className="text-white font-heading font-semibold">
+                    <p className="text-white font-heading font-semibold" data-testid="creator-name">
                       {trip.creator.display_name || 'Anonymous Traveler'}
                     </p>
                   </div>

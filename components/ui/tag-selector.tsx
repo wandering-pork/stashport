@@ -64,6 +64,10 @@ export function TagSelector({
               onClick={() => handleToggle(tag)}
               disabled={isDisabled}
               aria-label={`${isSelected ? 'Remove' : 'Add'} ${tag} tag`}
+              aria-pressed={isSelected}
+              data-testid="tag-button"
+              data-tag={tag}
+              data-selected={isSelected}
               className={cn(
                 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium',
                 'border transition-all duration-200',

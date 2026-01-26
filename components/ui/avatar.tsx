@@ -7,6 +7,7 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg'
   color?: string
   className?: string
+  'data-testid'?: string
 }
 
 const SIZE_CLASSES = {
@@ -48,19 +49,20 @@ function getInitials(name: string | null): string {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 
-export function Avatar({ name, size = 'md', color, className }: AvatarProps) {
+export function Avatar({ name, size = 'md', color, className, 'data-testid': dataTestId }: AvatarProps) {
   const initials = getInitials(name)
   const bgColor = color || stringToColor(name || 'anonymous')
 
   return (
     <div
       className={cn(
-        'rounded-full flex items-center justify-center font-heading font-bold text-white',
+        'rounded-full flex items-center justify-center font-heading font-bold text-white avatar',
         SIZE_CLASSES[size],
         className
       )}
       style={{ backgroundColor: bgColor }}
       aria-label={name ? `Avatar for ${name}` : 'Anonymous avatar'}
+      data-testid={dataTestId}
     >
       {initials}
     </div>

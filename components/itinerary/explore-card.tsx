@@ -54,8 +54,9 @@ export function ExploreCard({ itinerary, index = 0 }: ExploreCardProps) {
   return (
     <article
       onClick={handleClick}
+      data-testid="explore-card"
       className={cn(
-        'group relative overflow-hidden rounded-2xl cursor-pointer',
+        'group relative overflow-hidden rounded-2xl cursor-pointer explore-card',
         'bg-white border border-neutral-200/60',
         'shadow-sm hover:shadow-dramatic-lg',
         'transform transition-all duration-500 ease-out',

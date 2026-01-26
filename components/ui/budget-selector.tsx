@@ -39,6 +39,10 @@ export function BudgetSelector({
             type="button"
             onClick={() => handleClick(level)}
             disabled={disabled}
+            aria-pressed={isSelected}
+            data-testid="budget-button"
+            data-budget={level}
+            data-selected={isSelected}
             className={cn(
               'flex flex-col items-center px-4 py-2 rounded-lg',
               'border transition-all duration-200 min-w-[70px]',
