@@ -103,6 +103,7 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
     })
 
     // Browser launch args
+    // Note: --single-process is removed as it causes crashes in serverless environments
     const browserArgs = isDev
       ? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
       : [
@@ -112,12 +113,11 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
           '--disable-setuid-sandbox',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
         ]
 
     console.log('[ImageGenerator] Browser args:', browserArgs.slice(0, 5), '...')
 
-    // Launch browser
+    // Launch browser with timeout for serverless
     browser = await puppeteer.launch({
       args: browserArgs,
       defaultViewport: {
@@ -126,6 +126,7 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
       },
       executablePath,
       headless: true,
+      timeout: 20000, // 20 second timeout for browser launch
     })
 
     const page = await browser.newPage()
@@ -137,10 +138,18 @@ export async function generateImage(options: GenerateImageOptions): Promise<Buff
       deviceScaleFactor: 2, // High DPI for quality
     })
 
-    // Load HTML content
+    // Load HTML content with timeout
+    // Use 'domcontentloaded' instead of 'networkidle0' to avoid timeout issues
+    // with external resources (Google Fonts, Tailwind CDN) in serverless
     await page.setContent(html, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'domcontentloaded',
+      timeout: 15000, // 15 second timeout
     })
+
+    // Wait for fonts to load and styles to apply
+    await page.evaluate(() => document.fonts.ready)
+    // Small delay for Tailwind to process
+    await new Promise(resolve => setTimeout(resolve, 1000))
 
     console.log('[ImageGenerator] HTML loaded, capturing screenshot')
 
@@ -178,6 +187,7 @@ export function buildTemplateHTML(
   const { width, height } = formatConfig
 
   // Base HTML structure with Tailwind CDN
+  // Using system font fallbacks to ensure rendering works even if Google Fonts fail to load
   const baseHTML = `
 <!DOCTYPE html>
 <html>
@@ -195,9 +205,10 @@ export function buildTemplateHTML(
       height: ${height}px;
       overflow: hidden;
     }
-    .font-display { font-family: 'Playfair Display', serif; }
-    .font-heading { font-family: 'Space Grotesk', sans-serif; }
-    .font-body { font-family: 'Source Sans Pro', sans-serif; }
+    /* Font families with system fallbacks for reliability */
+    .font-display { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+    .font-heading { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .font-body { font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .bg-cream { background-color: #fffaf5; }
   </style>
 </head>
