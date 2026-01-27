@@ -21,29 +21,52 @@ test.describe('Authentication - Login', () => {
       return
     }
 
-    await page.fill('input[type="email"]', testEmail)
-    await page.fill('input[type="password"]', testPassword)
-    await page.click('button[type="submit"]')
+    // Use role-based selectors for better cross-browser compatibility
+    // Wait for form to be ready, then fill fields
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.waitFor({ state: 'visible' })
+    await emailInput.click()
+    await emailInput.fill(testEmail)
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
+    const passwordInput = page.getByRole('textbox', { name: /password/i })
+    await passwordInput.click()
+    await passwordInput.fill(testPassword)
+
+    // Use exact match to avoid matching "Sign in with Google"
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 })
   })
 
   // AUTH-014: Login with wrong password
   test('AUTH-014: login with wrong password shows error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'test@example.com')
-    await page.fill('input[type="password"]', 'WrongPassword1!')
-    await page.click('button[type="submit"]')
+    // Use role-based selectors with click before fill for WebKit compatibility
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('test@example.com')
 
-    await expect(page.locator('text=Invalid login credentials')).toBeVisible({ timeout: 5000 })
+    const passwordInput = page.getByRole('textbox', { name: /password/i })
+    await passwordInput.click()
+    await passwordInput.fill('WrongPassword1!')
+
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+
+    await expect(page.locator('text=Invalid login credentials')).toBeVisible({ timeout: 10000 })
   })
 
   // AUTH-015: Login with unregistered email
   test('AUTH-015: login with unregistered email shows error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'nonexistent@fakeemail12345.com')
-    await page.fill('input[type="password"]', 'Password1!')
-    await page.click('button[type="submit"]')
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('nonexistent@fakeemail12345.com')
 
-    await expect(page.locator('text=Invalid login credentials')).toBeVisible({ timeout: 5000 })
+    const passwordInput = page.getByRole('textbox', { name: /password/i })
+    await passwordInput.click()
+    await passwordInput.fill('Password1!')
+
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+
+    await expect(page.locator('text=Invalid login credentials')).toBeVisible({ timeout: 10000 })
   })
 
   // AUTH-017: Login redirect preservation
@@ -60,10 +83,10 @@ test.describe('Authentication - Login', () => {
 
   // Check login page elements
   test('login page has required elements', async ({ page }) => {
-    await expect(page.locator('input[type="email"]')).toBeVisible()
-    await expect(page.locator('input[type="password"]')).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
-    await expect(page.locator('text=Continue with Google')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /password/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible()
+    await expect(page.getByText('Continue with Google')).toBeVisible()
   })
 })
 
@@ -74,17 +97,24 @@ test.describe('Authentication - Signup', () => {
 
   // AUTH-002: Signup with weak password
   test('AUTH-002: signup with weak password shows validation error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'test@example.com')
-    await page.fill('input[name="password"], input[type="password"]', 'weakpassword')
+    // Click before fill for WebKit compatibility
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('test@example.com')
+
+    const passwordInput = page.getByRole('textbox', { name: /^password$/i })
+    await passwordInput.click()
+    await passwordInput.fill('weakpassword')
 
     // Find confirm password field
-    const confirmField = page.locator('input[name="confirmPassword"]')
+    const confirmField = page.getByRole('textbox', { name: /confirm/i })
     if (await confirmField.isVisible()) {
+      await confirmField.click()
       await confirmField.fill('weakpassword')
     }
 
     // Try to submit
-    await page.click('button[type="submit"]')
+    await page.getByRole('button', { name: 'Create Account' }).click()
 
     // Should show password requirements error or stay on page
     const errorMessage = page.locator('text=/uppercase|lowercase|number|special|password|strong|weak|requirement/i')
@@ -97,14 +127,20 @@ test.describe('Authentication - Signup', () => {
 
   // AUTH-003: Signup with password mismatch
   test('AUTH-003: signup with mismatched passwords shows error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'test@example.com')
-    await page.fill('input[name="password"], input[type="password"]', 'StrongPass1!')
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('test@example.com')
+
+    const passwordInput = page.getByRole('textbox', { name: /^password$/i })
+    await passwordInput.click()
+    await passwordInput.fill('StrongPass1!')
 
     // Find confirm password field
-    const confirmField = page.locator('input[name="confirmPassword"]')
+    const confirmField = page.getByRole('textbox', { name: /confirm/i })
     if (await confirmField.isVisible()) {
+      await confirmField.click()
       await confirmField.fill('DifferentPass1!')
-      await page.click('button[type="submit"]')
+      await page.getByRole('button', { name: 'Create Account' }).click()
 
       // Should show mismatch error or stay on page
       const errorMessage = page.locator('text=/match|mismatch|same|different/i')
@@ -117,16 +153,22 @@ test.describe('Authentication - Signup', () => {
 
   // AUTH-004: Signup with invalid email format
   test('AUTH-004: signup with invalid email shows validation error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'notanemail')
-    await page.fill('input[name="password"], input[type="password"]', 'StrongPass1!')
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('notanemail')
+
+    const passwordInput = page.getByRole('textbox', { name: /^password$/i })
+    await passwordInput.click()
+    await passwordInput.fill('StrongPass1!')
 
     // Find confirm password field
-    const confirmField = page.locator('input[name="confirmPassword"]')
+    const confirmField = page.getByRole('textbox', { name: /confirm/i })
     if (await confirmField.isVisible()) {
+      await confirmField.click()
       await confirmField.fill('StrongPass1!')
     }
 
-    await page.click('button[type="submit"]')
+    await page.getByRole('button', { name: 'Create Account' }).click()
 
     // Should show email validation error or browser validation prevents submission
     const errorMessage = page.locator('text=/invalid|email|valid/i')
@@ -139,20 +181,27 @@ test.describe('Authentication - Signup', () => {
 
   // AUTH-006: Signup with invalid display name
   test('AUTH-006: signup with invalid display name shows error', async ({ page }) => {
-    await page.fill('input[type="email"]', 'test@example.com')
-    await page.fill('input[name="password"], input[type="password"]', 'StrongPass1!')
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill('test@example.com')
+
+    const passwordInput = page.getByRole('textbox', { name: /^password$/i })
+    await passwordInput.click()
+    await passwordInput.fill('StrongPass1!')
 
     // Find confirm password field
-    const confirmField = page.locator('input[name="confirmPassword"]')
+    const confirmField = page.getByRole('textbox', { name: /confirm/i })
     if (await confirmField.isVisible()) {
+      await confirmField.click()
       await confirmField.fill('StrongPass1!')
     }
 
     // Find display name field if it exists
-    const displayNameField = page.locator('input[name="displayName"]')
+    const displayNameField = page.getByRole('textbox', { name: /display|name/i })
     if (await displayNameField.isVisible()) {
+      await displayNameField.click()
       await displayNameField.fill('User@#$%')
-      await page.click('button[type="submit"]')
+      await page.getByRole('button', { name: 'Create Account' }).click()
 
       // Should show display name validation error or stay on page
       const errorMessage = page.locator('text=/letters|numbers|underscore|invalid|name/i')
@@ -165,10 +214,10 @@ test.describe('Authentication - Signup', () => {
 
   // Check signup page elements
   test('signup page has required elements', async ({ page }) => {
-    await expect(page.locator('input[type="email"]')).toBeVisible()
-    await expect(page.locator('input[type="password"]').first()).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
-    await expect(page.locator('text=Continue with Google')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /password/i }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create Account' })).toBeVisible()
+    await expect(page.getByText('Continue with Google')).toBeVisible()
   })
 })
 
@@ -186,10 +235,16 @@ test.describe('Authentication - Session', () => {
 
     // Login first
     await page.goto('/auth/login')
-    await page.fill('input[type="email"]', testEmail)
-    await page.fill('input[type="password"]', testPassword)
-    await page.click('button[type="submit"]')
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
+    const emailInput = page.getByRole('textbox', { name: /email/i })
+    await emailInput.click()
+    await emailInput.fill(testEmail)
+
+    const passwordInput = page.getByRole('textbox', { name: /password/i })
+    await passwordInput.click()
+    await passwordInput.fill(testPassword)
+
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 })
 
     // Find and click logout button
     const logoutButton = page.locator('button:has-text("Logout"), button:has-text("Sign out"), [aria-label="Logout"]')

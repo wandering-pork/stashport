@@ -185,9 +185,12 @@ test.describe('Itinerary - Public Trip Page', () => {
       const slug = data.itineraries[0].slug
       await page.goto(`/t/${slug}`)
 
-      // Should show creator avatar or name
-      const creatorInfo = page.locator('[data-testid="creator"], [class*="avatar"], [class*="author"]')
-      await expect(creatorInfo).toBeVisible({ timeout: 5000 })
+      // Wait for page content to load (trip title h1 appears)
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 10000 })
+
+      // Should show creator info - look for "Created by" text
+      const creatorText = page.getByText('Created by')
+      await expect(creatorText).toBeVisible({ timeout: 5000 })
     } else {
       test.skip()
     }

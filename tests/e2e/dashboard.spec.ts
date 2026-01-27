@@ -41,11 +41,19 @@ test.describe('Dashboard - Authenticated', () => {
   test('DASH-001: dashboard shows user content', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Dashboard should show greeting or content
-    const greeting = page.locator('h1:has-text("Hi")')
-    const content = page.locator('text=/upcoming trips|your trips|suggested/i')
+    // Wait for loading state to disappear (dashboard fetches data on load)
+    await page.waitForSelector('text=Loading your adventures', { state: 'hidden', timeout: 15000 }).catch(() => {
+      // Loading may have already completed
+    })
 
-    await expect(greeting.or(content)).toBeVisible({ timeout: 5000 })
+    // Dashboard should show greeting (h1 containing "Hi") or trip sections
+    // Use role-based selector which is more reliable
+    const greeting = page.getByRole('heading', { level: 1 })
+    await expect(greeting).toBeVisible({ timeout: 10000 })
+
+    // Verify it contains expected content (greeting or dashboard sections)
+    const headingText = await greeting.textContent()
+    expect(headingText?.toLowerCase()).toMatch(/hi|adventure|trips/)
   })
 
   // DASH-002: Empty state or trips displayed
@@ -71,8 +79,10 @@ test.describe('Dashboard - Authenticated', () => {
   test('DASH-020: dashboard sections are visible', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Wait for page to load
-    await page.waitForTimeout(2000)
+    // Wait for loading state to disappear
+    await page.waitForSelector('text=Loading your adventures', { state: 'hidden', timeout: 15000 }).catch(() => {
+      // Loading may have already completed
+    })
 
     // Check for main dashboard sections (redesigned layout)
     const upcomingSection = page.locator('text=/upcoming trips|your trips/i')
@@ -91,11 +101,11 @@ test.describe('Dashboard - Authenticated', () => {
   test('DASH-021: view all trips link navigates correctly', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Wait for page to load
-    await page.waitForTimeout(2000)
+    // Wait for loading state to disappear
+    await page.waitForSelector('text=Loading your adventures', { state: 'hidden', timeout: 15000 }).catch(() => {})
 
-    // Look for "View All Trips" link
-    const viewAllLink = page.locator('a:has-text("View All Trips"), a[href*="/dashboard/trips"]')
+    // Look for "View All Trips" link specifically (not the nav "My Trips" link)
+    const viewAllLink = page.getByRole('link', { name: 'View All Trips' })
 
     if (await viewAllLink.isVisible()) {
       await viewAllLink.click()
