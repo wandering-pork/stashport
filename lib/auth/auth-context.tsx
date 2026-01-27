@@ -37,49 +37,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Fetch user profile from our users table, create if doesn't exist
   // Includes debouncing to prevent rapid duplicate fetches
-  const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string): Promise<UserProfile | null> => {
     // Debounce: skip if same user was fetched within last 500ms
     const now = Date.now()
     if (lastProfileFetch.current &&
         lastProfileFetch.current.userId === userId &&
         now - lastProfileFetch.current.timestamp < 500) {
-      console.log('[Auth] Skipping duplicate profile fetch (debounced)')
       return null // Signal that fetch was skipped; caller should use existing state
     }
     lastProfileFetch.current = { userId, timestamp: now }
 
+    // Create a timeout promise to prevent hanging forever
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Profile fetch timeout after 10s')), 10000)
+    })
+
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, display_name, avatar_color')
-        .eq('id', userId)
-        .single()
+      const fetchPromise = (async () => {
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, email, display_name, avatar_color')
+          .eq('id', userId)
+          .single()
 
-      if (error) {
-        // PGRST116 means no rows found - create the profile
-        if (error.code === 'PGRST116' && userEmail) {
-          console.log('[Auth] Profile not found, creating new profile...')
-          const { data: newProfile, error: createError } = await supabase
-            .from('users')
-            .insert({
-              id: userId,
-              auth_id: userId,
-              email: userEmail,
-            })
-            .select('id, email, display_name, avatar_color')
-            .single()
+        if (error) {
+          // PGRST116 means no rows found - create the profile
+          if (error.code === 'PGRST116' && userEmail) {
+            console.log('[Auth] Creating profile for new user')
+            const { data: newProfile, error: createError } = await supabase
+              .from('users')
+              .insert({
+                id: userId,
+                auth_id: userId,
+                email: userEmail,
+              })
+              .select('id, email, display_name, avatar_color')
+              .single()
 
-          if (createError) {
-            console.error('[Auth] Error creating profile:', createError)
-            return null
+            if (createError) {
+              console.error('[Auth] Error creating profile:', createError)
+              return null
+            }
+            return newProfile as UserProfile
           }
-          console.log('[Auth] Profile created successfully')
-          return newProfile as UserProfile
+          console.error('[Auth] Error fetching profile:', error)
+          return null
         }
-        console.error('[Auth] Error fetching profile:', error)
-        return null
-      }
-      return data as UserProfile
+        return data as UserProfile
+      })()
+
+      // Race between fetch and timeout
+      return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
       console.error('[Auth] Error fetching profile:', err)
       return null
@@ -99,11 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      console.log('[Auth] Getting initial session...')
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error('[Auth] Session error:', sessionError)
+        }
+
         const currentUser = session?.user ?? null
-        console.log('[Auth] Initial session result:', { hasUser: !!currentUser, userId: currentUser?.id })
         setUser(currentUser)
 
         // Fetch profile if user exists
@@ -130,12 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state changed:', { event, hasUser: !!session?.user, userId: session?.user?.id })
-
       // Skip INITIAL_SESSION event if we've already processed initial session
       // This prevents double profile fetch on page load
       if (event === 'INITIAL_SESSION' && initialSessionProcessed.current) {
-        console.log('[Auth] Skipping duplicate INITIAL_SESSION event')
+        return
+      }
+
+      // For SIGNED_IN event, let getInitialSession handle it to prevent race conditions
+      if (event === 'SIGNED_IN' && !initialSessionProcessed.current) {
         return
       }
 
